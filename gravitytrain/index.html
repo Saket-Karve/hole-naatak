@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gravity Train — Earth Tunnel Project</title>
+    <meta name="description" content="Gravity Train: a science‑fiction earth-tunnel between Cupertino and New Delhi. Live digging status, distance, and progress." />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg: #0b1020;
+        --panel: rgba(14,20,40,0.72);
+        --panel-border: rgba(255,255,255,0.08);
+        --glow: #00d1ff;
+        --accent: #ffb347;
+        --ok: #25d37d;
+        --muted: #9fb0c2;
+        --text: #e6eef7;
+      }
+      *{box-sizing:border-box}
+      html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 60% -10%, #2f57a8 0%, #244989 45%, #173467 100%) fixed;font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;color:var(--text);overflow:hidden}
+      a{color:var(--glow);text-decoration:none}
+      .chrome{
+        position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;pointer-events:none;
+      }
+      header{
+        display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--panel-border);background:linear-gradient(180deg,#0f1730,transparent);
+        pointer-events:auto;
+      }
+      .logo{
+        width:40px;height:40px;border-radius:8px;display:block;
+        object-fit:cover;object-position:center;
+        box-shadow:0 2px 8px rgba(0,0,0,.3);
+      }
+      .brand{
+        display:flex;flex-direction:column;line-height:1;
+      }
+      .brand .title{
+        font-family:Orbitron,Montserrat,sans-serif;letter-spacing:0.06em;font-weight:800;font-size:20px;text-transform:uppercase;
+        text-shadow:0 0 18px rgba(0,209,255,.25);
+      }
+      .brand .subtitle{font-size:12px;color:var(--muted)}
+
+      main{position:relative;pointer-events:auto}
+      #scene-wrap{position:absolute;inset:0;pointer-events:auto}
+      #cesiumContainer{width:100%;height:100%;display:block}
+
+      /* Left status panel */
+      .panel{
+        position:absolute;left:16px;top:96px;width:320px;backdrop-filter: blur(10px);
+        background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;padding:14px 14px 12px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35);
+        pointer-events:auto;
+      }
+      .panel.right{left:auto;right:16px}
+      .panel h3{
+        margin:6px 8px 10px 8px;font-weight:800;letter-spacing:.06em;color:#cfe7ff;font-size:13px;text-transform:uppercase;opacity:.9
+      }
+      .kv{
+        display:grid;grid-template-columns:1fr auto;gap:8px 10px;margin:10px 8px 6px 8px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08)
+      }
+      .kv .k{color:#a9bfd6}
+      .kv .v{font-weight:600}
+      .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);margin:10px 0}
+
+      /* Progress strip */
+      .progress{
+        display:flex;align-items:center;gap:10px;margin:12px 8px 6px 8px
+      }
+      .worm{
+        width:26px;height:26px;border-radius:20px;background:radial-gradient(circle at 35% 35%, #fff 0%, #ffe6a7 25%, #ffb347 60%, #b66d13 100%);
+        box-shadow:0 0 18px rgba(255,179,71,.7), 0 0 36px rgba(255,179,71,.35);
+        border:1px solid rgba(255,255,255,.35);
+      }
+      .bar{flex:1;height:10px;background:rgba(255,255,255,.08);border-radius:999px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
+      .fill{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#00e1ff,#00ffa6);box-shadow:0 0 22px rgba(0,255,214,.45);border-radius:inherit}
+      .pct{width:58px;text-align:right;color:#d1ffe9;font-weight:700}
+      .dates{margin:8px 8px 4px 8px;color:var(--muted);font-size:12px}
+      .btn{
+        display:inline-flex;align-items:center;gap:8px;margin:10px 8px 6px 8px;padding:10px 14px;border-radius:10px;
+        background:linear-gradient(180deg,#1f4090,#183671);color:#eaf2ff;border:1px solid rgba(255,255,255,.22);font-weight:800;letter-spacing:.02em;cursor:pointer;
+        box-shadow:0 8px 18px rgba(0,0,0,.25), inset 0 0 10px rgba(255,255,255,.07);
+      }
+      .btn:hover{filter:brightness(1.08)}
+      .btn:active{transform:translateY(1px)}
+      /* Center progress card */
+      .progress-card{
+        position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:12;
+        width:min(640px,70vw);padding:10px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--panel-border);
+        box-shadow:0 10px 40px rgba(0,0,0,.35);backdrop-filter: blur(10px);
+        pointer-events:auto;
+      }
+      /* Promo banner */
+      .promo{
+        position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
+        width:min(760px,92vw);max-width:92vw;padding:24px 28px;border-radius:16px;z-index:30;
+        text-align:center;text-decoration:none;display:none;pointer-events:auto;color:#eaf2ff;font-weight:700;line-height:1.45;
+        background:
+          radial-gradient(140% 220% at 50% -20%, rgba(0,240,255,.18), rgba(0,0,0,.45) 40%),
+          var(--panel);
+        border:1px solid rgba(0,255,255,.28);
+        box-shadow:
+          0 0 0 1px rgba(0,255,255,.16) inset,
+          0 24px 90px rgba(0,0,0,.55),
+          0 0 48px rgba(0,225,255,.35);
+      }
+      .promo small{display:block;color:#bfe6ff;font-weight:800;opacity:.95;margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
+      .promo em{font-style:normal;color:#ffe0a8}
+      .promo::after{
+        content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
+        background:
+          radial-gradient(60% 40% at 50% 0%, rgba(0,255,255,.22), transparent 60%),
+          repeating-linear-gradient(180deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px);
+        mix-blend-mode:screen;opacity:.35;
+      }
+      .promo .promo-close{
+        position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.25);
+        background:linear-gradient(180deg, rgba(0,255,255,.16), rgba(0,0,0,.35));color:#eaf6ff;font-weight:900;cursor:pointer;
+        box-shadow:inset 0 0 10px rgba(255,255,255,.08), 0 6px 16px rgba(0,0,0,.35);
+      }
+      .promo .promo-close:hover{filter:brightness(1.1)}
+      .promo.show{display:block;animation:pop .35s ease-out, glow 3s ease-in-out infinite alternate}
+      @keyframes pop { from{transform:translate(-50%,-50%) scale(.92);opacity:0} to{transform:translate(-50%,-50%) scale(1);opacity:1} }
+      @keyframes glow { from{box-shadow:0 0 0 1px rgba(0,255,255,.16) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 28px rgba(0,225,255,.25)} to{box-shadow:0 0 0 1px rgba(0,255,255,.25) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 64px rgba(0,225,255,.55)} }
+
+      /* Modal backdrop for promo */
+      .promo-backdrop{
+        position:fixed;inset:0;display:none;z-index:20;
+        background:
+          radial-gradient(60% 60% at 50% 50%, rgba(0,224,255,.10), transparent 70%),
+          rgba(6,12,26,.55);
+        backdrop-filter: blur(2px);
+      }
+      .promo-backdrop.show{display:block;animation:fade .25s ease-out}
+      @keyframes fade { from{opacity:0} to{opacity:1} }
+      @keyframes pop { from{transform:translateY(6px);opacity:0} to{transform:none;opacity:1} }
+
+      /* Distance tag over the globe */
+      .distance-tag{
+        position:absolute;right:16px;top:auto;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--panel-border);
+        color:#e8f6ff;font-weight:700;backdrop-filter: blur(8px);pointer-events:auto;max-width:420px; z-index:11;
+      }
+      .distance-tag small{display:block;font-weight:600;color:#a6c1d8}
+
+      footer{
+        display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--panel-border);color:var(--muted);
+        background:linear-gradient(0deg,#0f1730,transparent);
+        pointer-events:auto;
+      }
+      .credit{font-size:12px}
+
+      /* CSS2D labels */
+      .label{
+        padding:4px 8px;border-radius:8px;background:rgba(7,14,28,.7);border:1px solid rgba(255,255,255,.2);color:#e8f4ff;font-weight:700;font-size:12px;
+        box-shadow:0 8px 20px rgba(0,0,0,.4)
+      }
+
+      /* Responsive tweaks */
+      @media (max-width: 980px) {
+        .panel{width:300px}
+        .distance-tag{max-width:320px}
+      }
+      @media (max-width: 760px) {
+        .panel{width:auto;left:12px;right:12px;top:auto;bottom:98px}
+        .distance-tag{right:12px;left:12px;top:84px}
+        header{flex-wrap:wrap}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chrome">
+      <header>
+        <img class="logo" src="gt-logo.jpg" alt="Gravity Train logo" />
+        <div class="brand">
+          <div class="title">Gravity Train</div>
+          <div class="subtitle">Earth Tunnel Project — Cupertino ⇄ New Delhi</div>
+        </div>
+      </header>
+      <main>
+        <div id="scene-wrap">
+          <div id="cesiumContainer" aria-label="Realistic Earth with tunnel arc"></div>
+        </div>
+
+        <!-- Imperial panel on the left (US) -->
+        <aside class="panel" aria-label="Digging Status (Imperial)">
+          <h3>Digging Status</h3>
+          <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speedImp"></span> ft³/s</div></div>
+          <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtimeImp"></span>%</div></div>
+          <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecsImp"></span> s</div></div>
+          <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDayImp"></span> ft³</div></div>
+          <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDayImp"></span> mi</div></div>
+          <div class="divider"></div>
+          <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelMi"></span> mi</div></div>
+          <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDaysImp"></span> days</div></div>
+          <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVolImp"></span> ft³</div></div>
+          <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCubeImp"></span></div></div>
+        </aside>
+
+        <!-- Centered progress card -->
+        <section id="progressCard" class="progress-card">
+          <div class="progress" aria-label="Worm Location">
+            <div class="worm" aria-hidden="true"></div>
+            <div class="bar"><div id="fill" class="fill"></div></div>
+            <div id="pct" class="pct">0%</div>
+          </div>
+          <div class="dates">
+            <div>Worm Location: <strong id="wormText">0%</strong></div>
+            <div>Digging Started: <strong>Cupertino, Aug 5, 2012</strong></div>
+            <div>Digging Ends: <strong>New Delhi, Jan 21, 2024</strong></div>
+          </div>
+        </section>
+
+        <div class="distance-tag" id="distanceTag">
+          The Gravity Tunnel — <span id="distanceText">…</span>
+          <small>Through-Earth chord distance. Projected travel time at 1 g: 42 minutes.</small>
+        </div>
+        <div id="promoBackdrop" class="promo-backdrop"></div>
+        <a id="promoBanner" class="promo" href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener">
+          <button class="promo-close" type="button" aria-label="Close">×</button>
+          <small>Experience Gravity Train</small>
+          Get an experience of the Gravity Train from <em>Jan 21</em> to <em>Feb 15</em> at <em>Startbright Theater</em>. Visit <em>naatak.org</em>.
+        </a>
+
+        <!-- Metric panel on the right (India) -->
+        <aside class="panel right" aria-label="Digging Status (Metric)">
+          <h3>Digging Status</h3>
+          <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speed"></span> m³/s</div></div>
+          <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtime"></span>%</div></div>
+          <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecs"></span> s</div></div>
+          <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDay"></span> m³</div></div>
+          <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDay"></span> km</div></div>
+          <div class="divider"></div>
+          <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelKm"></span> km</div></div>
+          <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDays"></span> days</div></div>
+          <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVol"></span> m³</div></div>
+          <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCube"></span></div></div>
+        </aside>
+      </main>
+      <footer>
+        <div class="credit">© <span id="year"></span> Naatak — America's Largest Indian Theater</div>
+      </footer>
+    </div>
+
+    <!-- CesiumJS (globe engine) -->
+    <link rel="stylesheet" href="https://unpkg.com/cesium@1.119/Build/Cesium/Widgets/widgets.css" />
+    <script src="https://unpkg.com/cesium@1.119/Build/Cesium/Cesium.js"></script>
+    <script>
+
+      // ---------- Utility formatting ----------
+      const fmt = new Intl.NumberFormat('en-US');
+      const km = v => fmt.format((v).toFixed(0));
+      const km2 = v => fmt.format((v).toFixed(2));
+      const num0 = v => fmt.format(Math.round(v));
+      const num2 = v => fmt.format(parseFloat(v.toFixed(2)));
+
+      // ---------- Scenario constants ----------
+      const EARTH_RADIUS_KM = 6371.0088;
+      const START = new Date('2012-08-05T00:00:00Z');
+      const END   = new Date('2024-01-21T00:00:00Z');
+
+      // Cities
+      const CUPERTINO = { name:'Cupertino', lat:37.3318, lon:-122.0312 };
+      const NEW_DELHI = { name:'New Delhi', lat:28.6139, lon:77.2090 };
+
+      // Tunnel geometry assumptions (for derived metrics)
+      const TUNNEL_RADIUS_M = 3; // 6 m diameter
+      const SECTION_AREA_M2 = Math.PI * TUNNEL_RADIUS_M * TUNNEL_RADIUS_M; // 28.27 m^2
+      const DIG_SECONDS_PER_DAY = 6 * 60 * 60; // 21,600 s (6 hours)
+      const DOWNTIME_PCT = 75; // remaining time is downtime
+      const SPEED_M3_S = 3.42; // m^3 per second
+      const VOLUME_PER_DAY_M3 = SPEED_M3_S * DIG_SECONDS_PER_DAY; // 73,872 m^3/day
+
+      // ---------- Distance calculations ----------
+      function toRad(d){ return d * Math.PI / 180; }
+      function centralAngle(lat1, lon1, lat2, lon2){
+        const dLat = toRad(lat2-lat1);
+        const dLon = toRad(lon2-lon1);
+        const rlat1 = toRad(lat1);
+        const rlat2 = toRad(lat2);
+        const a = Math.sin(dLat/2)**2 + Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(dLon/2)**2;
+        return 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+      }
+      const theta = centralAngle(CUPERTINO.lat, CUPERTINO.lon, NEW_DELHI.lat, NEW_DELHI.lon);
+      const surfaceKm = EARTH_RADIUS_KM * theta;
+      const chordKm   = 2 * EARTH_RADIUS_KM * Math.sin(theta/2);
+
+      // Derived tunneling metrics
+      const totalLengthM = chordKm * 1000;
+      const totalVolumeM3 = SECTION_AREA_M2 * totalLengthM;
+      const advancePerDayKm = (VOLUME_PER_DAY_M3 / SECTION_AREA_M2) / 1000; // ≈2.61 km/day
+      const totalDays = totalLengthM / (advancePerDayKm * 1000); // length_m / (km/day -> m/day)
+
+      // ---------- Populate status UI ----------
+      document.getElementById('speed').textContent = num2(SPEED_M3_S);
+      document.getElementById('downtime').textContent = DOWNTIME_PCT;
+      document.getElementById('digSecs').textContent = num0(DIG_SECONDS_PER_DAY);
+      document.getElementById('volDay').textContent = num0(VOLUME_PER_DAY_M3);
+      document.getElementById('advanceDay').textContent = km2(advancePerDayKm);
+      document.getElementById('tunnelKm').textContent = km(chordKm);
+      document.getElementById('totalDays').textContent = num0(totalDays);
+      document.getElementById('totalVol').textContent = fmt.format(Math.round(totalVolumeM3));
+      // Dirt cube (side^3 = volume) -> side in meters
+      const dirtCubeSide = Math.cbrt(totalVolumeM3);
+      const sideRounded = Math.round(dirtCubeSide/1) * 1;
+      document.getElementById('dirtCube').textContent = `${sideRounded} m × ${sideRounded} m × ${sideRounded} m`;
+      document.getElementById('distanceText').textContent = `${km(chordKm)} km (through Earth) · ${km(surfaceKm)} km by surface`;
+      document.getElementById('year').textContent = new Date().getFullYear();
+      // Imperial conversions
+      const M_TO_FT = 3.280839895;
+      const KM_TO_MI = 0.621371192;
+      const M3_TO_FT3 = 35.3146667;
+      const speedFt3s = SPEED_M3_S * M3_TO_FT3;
+      const volDayFt3 = VOLUME_PER_DAY_M3 * M3_TO_FT3;
+      const advanceDayMi = advancePerDayKm * KM_TO_MI;
+      const tunnelMiVal = chordKm * KM_TO_MI;
+      const totalVolFt3 = totalVolumeM3 * M3_TO_FT3;
+      const dirtCubeSideFt = dirtCubeSide * M_TO_FT;
+      document.getElementById('speedImp').textContent = num2(speedFt3s);
+      document.getElementById('downtimeImp').textContent = DOWNTIME_PCT;
+      document.getElementById('digSecsImp').textContent = num0(DIG_SECONDS_PER_DAY);
+      document.getElementById('volDayImp').textContent = num0(volDayFt3);
+      document.getElementById('advanceDayImp').textContent = km2(advanceDayMi);
+      document.getElementById('tunnelMi').textContent = km(tunnelMiVal);
+      document.getElementById('totalDaysImp').textContent = num0(totalDays);
+      document.getElementById('totalVolImp').textContent = fmt.format(Math.round(totalVolFt3));
+      const sideFtRounded = Math.round(dirtCubeSideFt);
+      document.getElementById('dirtCubeImp').textContent = `${sideFtRounded} ft × ${sideFtRounded} ft × ${sideFtRounded} ft`;
+
+      // Progress (interactive + simulated)
+      const DEFAULT_PROGRESS = 0.10; // default 10%
+      let progressFraction = DEFAULT_PROGRESS;
+      function progress01(){ return progressFraction; }
+      function dateForProgress(p){ return new Date(START.getTime() + p * (END - START)); }
+      function setProgress(p){
+        progressFraction = Math.max(0, Math.min(1, p));
+        const pct = Math.round(progressFraction*100);
+        document.getElementById('pct').textContent = `${pct}%`;
+        const dt = dateForProgress(progressFraction).toLocaleString();
+        document.getElementById('wormText').textContent = `${pct}% [Hypothetical: ${dt}]`;
+        document.getElementById('fill').style.width = `${pct}%`;
+        // Update progressed overlay (drawn atop the bright blue base)
+        try {
+          if (typeof updateProgressOverlay === 'function') {
+            updateProgressOverlay(progressFraction);
+          }
+        } catch(_) {}
+      }
+      setProgress(progress01());
+      // Auto-run simulation once on load
+      (function autoSimulate(){
+        let raf = null;
+        // Restart from 0
+        setProgress(0);
+        const durationMs = 12000; // 12s from 0 → 100%
+        const start = performance.now();
+        function step(ts){
+          const t = Math.min(1, (ts - start) / durationMs);
+          setProgress(t);
+          if(t < 1){
+            raf = requestAnimationFrame(step);
+          }else{
+            const promo = document.getElementById('promoBanner');
+            const backdrop = document.getElementById('promoBackdrop');
+            if(promo){ promo.classList.add('show'); }
+            if(backdrop){ backdrop.classList.add('show'); }
+          }
+        }
+        raf && cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(step);
+      })();
+      // Banner close handlers and reset progress
+      (function wirePromoClose(){
+        const promo = document.getElementById('promoBanner');
+        const backdrop = document.getElementById('promoBackdrop');
+        const closeBtn = promo ? promo.querySelector('.promo-close') : null;
+        function hidePromoAndReset(){
+          if(promo) promo.classList.remove('show');
+          if(backdrop) backdrop.classList.remove('show');
+          setProgress(DEFAULT_PROGRESS);
+        }
+        if(closeBtn){
+          closeBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); hidePromoAndReset(); });
+        }
+        if(backdrop){
+          backdrop.addEventListener('click', hidePromoAndReset);
+        }
+        document.addEventListener('keydown', (e)=>{
+          if(e.key === 'Escape' || e.key === 'Esc'){
+            if(promo && promo.classList.contains('show')){
+              hidePromoAndReset();
+            }
+          }
+        });
+      })();
+
+      // ---------- CesiumJS globe ----------
+      // Point Cesium to its asset/worker base on the CDN
+      window.CESIUM_BASE_URL = 'https://unpkg.com/cesium@1.119/Build/Cesium/';
+      // Paste your token below. Leave empty to use the fallback OSM/ellipsoid setup.
+      const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYWY0MmJkMy01ODFhLTQ0ZWEtYWYyYS03ZmMyMTdiZmYxMGMiLCJpZCI6MzcxNTU0LCJpYXQiOjE3NjYzMDc2NDN9.SdxF3dwacj4mTMhMQWUAekzCBNNSacNiJWDO6B9evYk'; // <-- PASTE YOUR CESIUM ION TOKEN HERE
+      if (ION_TOKEN) {
+        Cesium.Ion.defaultAccessToken = ION_TOKEN;
+      }
+
+      const viewer = new Cesium.Viewer('cesiumContainer', {
+        animation: false,
+        timeline: false,
+        baseLayerPicker: false,
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        navigationHelpButton: false,
+        infoBox: false
+      });
+      // Choose data sources depending on whether a token is available
+      if (ION_TOKEN) {
+        (async () => {
+          try {
+            const terrain = await Cesium.createWorldTerrainAsync();
+            viewer.terrainProvider = terrain;
+          } catch (e) {
+            console.warn('WorldTerrain load failed; continuing without terrain.', e);
+          }
+          try {
+            const worldImagery = await Cesium.IonImageryProvider.fromAssetId(2);
+            viewer.imageryLayers.removeAll();
+            viewer.imageryLayers.addImageryProvider(worldImagery);
+            tuneImagery();
+          } catch (e) {
+            console.warn('Ion imagery load failed; falling back to OSM.', e);
+            viewer.imageryLayers.removeAll();
+            viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+              url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              credit: '© OpenStreetMap contributors'
+            }));
+            tuneImagery();
+          }
+        })();
+      } else {
+        // Fallback: OSM + ellipsoid terrain (no token needed)
+        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        viewer.imageryLayers.removeAll();
+        viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          credit: '© OpenStreetMap contributors'
+        }));
+        tuneImagery();
+      }
+      // Scene brightness and tonemapping
+      viewer.scene.highDynamicRange = false; // LDR tends to look brighter on standard displays
+      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#1b3c7a');
+      viewer.scene.globe.enableLighting = true;
+      viewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere();
+      viewer.scene.globe.showGroundAtmosphere = true;
+      // Make the globe translucent so interior tunnel and marker are visible
+      viewer.scene.globe.translucency.enabled = true;
+      viewer.scene.globe.translucency.frontFaceAlpha = 0.35;
+      viewer.scene.globe.translucency.backFaceAlpha = 0.08;
+      if (viewer.scene.skyAtmosphere.brightnessShift !== undefined){
+        viewer.scene.skyAtmosphere.brightnessShift = 0.4;
+        viewer.scene.skyAtmosphere.hueShift = 0.02;
+        viewer.scene.skyAtmosphere.saturationShift = 0.15;
+      }
+
+      // Add a brighter directional light
+      try {
+        viewer.scene.light = new Cesium.DirectionalLight({
+          direction: new Cesium.Cartesian3(1.0, 0.6, 0.3),
+          intensity: 2.2
+        });
+      } catch(_) { /* older Cesium versions may ignore intensity */ }
+
+      // Apply brighter color grading to imagery layers
+      function tuneImagery(){
+        const layers = viewer.imageryLayers;
+        for(let i=0;i<layers.length;i++){
+          const layer = layers.get(i);
+          layer.brightness = 1.45;
+          layer.contrast = 1.20;
+          layer.gamma = 0.88;
+          layer.saturation = 1.25;
+        }
+      }
+      tuneImagery();
+
+      // Position the distance tag under the right panel
+      function positionDistanceTag(){
+        const rightPanel = document.querySelector('.panel.right');
+        const tag = document.getElementById('distanceTag');
+        const mainEl = document.querySelector('main');
+        if(!rightPanel || !tag || !mainEl) return;
+        const r = rightPanel.getBoundingClientRect();
+        const m = mainEl.getBoundingClientRect();
+        const top = (r.bottom - m.top) + 12; // 12px gap under panel
+        tag.style.top = `${Math.max(96, top)}px`;
+        tag.style.right = '16px';
+      }
+      window.addEventListener('resize', positionDistanceTag);
+      // Defer to next frame so layout is settled
+      requestAnimationFrame(positionDistanceTag);
+
+      // Labels for cities
+      function labelAt(lon, lat, text){
+        return viewer.entities.add({
+          position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+          label: {
+            text,
+            font: '700 14px Montserrat, sans-serif',
+            fillColor: Cesium.Color.WHITE,
+            showBackground: true,
+            backgroundColor: Cesium.Color.fromAlpha(Cesium.Color.BLACK, 0.6),
+            pixelOffset: new Cesium.Cartesian2(0, -16)
+          }
+        });
+      }
+      labelAt(CUPERTINO.lon, CUPERTINO.lat, 'Cupertino');
+      labelAt(NEW_DELHI.lon, NEW_DELHI.lat, 'New Delhi');
+
+      // Build straight interior chord through the Earth between the two cities
+      function buildChord(lon1, lat1, lon2, lat2, steps=180){
+        const start = Cesium.Cartesian3.fromDegrees(lon1, lat1, 0);
+        const end   = Cesium.Cartesian3.fromDegrees(lon2, lat2, 0);
+        const pts = new Array(steps+1);
+        for(let i=0;i<=steps;i++){
+          const t = i/steps;
+          const p = Cesium.Cartesian3.lerp(start, end, t, new Cesium.Cartesian3());
+          pts[i] = p;
+        }
+        return pts;
+      }
+      const chordPositions = buildChord(CUPERTINO.lon, CUPERTINO.lat, NEW_DELHI.lon, NEW_DELHI.lat, 240);
+      const chordEntity = viewer.entities.add({
+        name: 'The Gravity Tunnel (interior chord)',
+        polyline: {
+          positions: chordPositions,
+          width: 20,
+          // Visible normally
+          material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.22, color: Cesium.Color.fromCssColorString('#00d4ff') }),
+          // And also visible when occluded by the globe (so it “shows through” Earth)
+          depthFailMaterial: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.22, color: Cesium.Color.fromAlpha(Cesium.Color.CYAN, 0.75) })
+        }
+      });
+      // Progress overlay polyline (drawn atop, slightly thinner and gray)
+      const progressEntity = viewer.entities.add({
+        name: 'Tunnel Progress Overlay',
+        polyline: {
+          // Positions driven by current progressFraction via CallbackProperty
+          positions: new Cesium.CallbackProperty(function(){
+            const idx = Math.max(1, Math.floor(progressFraction * (chordPositions.length - 1)));
+            return chordPositions.slice(0, idx + 1);
+          }, false),
+          width: 18,
+          material: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#d5dbe2').withAlpha(1.0)),
+          depthFailMaterial: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#d5dbe2').withAlpha(1.0))
+        }
+      });
+
+      // Cylindrical tube (hollow) along the chord using polyline volumes
+      function circleShape(radius, segments=48){
+        const pts = [];
+        for(let i=0;i<segments;i++){
+          const a = (i/segments)*Math.PI*2;
+          pts.push(new Cesium.Cartesian2(Math.cos(a)*radius, Math.sin(a)*radius));
+        }
+        return pts;
+      }
+      const tubeOuterRadiusM = 50000; // 50 km visual thickness
+      const tubeInnerRadiusM = 32000; // inner hollow radius
+      // Outer translucent wall
+      const tubeOuterEntity = viewer.entities.add({
+        polylineVolume: {
+          positions: chordPositions,
+          shape: circleShape(tubeOuterRadiusM),
+          material: Cesium.Color.fromCssColorString('#00eaff').withAlpha(0.18)
+        }
+      });
+      // Inner dark core to create hollow appearance
+      const tubeInnerEntity = viewer.entities.add({
+        polylineVolume: {
+          positions: chordPositions,
+          shape: circleShape(tubeInnerRadiusM),
+          material: Cesium.Color.fromCssColorString('#061426').withAlpha(0.9)
+        }
+      });
+
+      // Moving worm along chord using a callback position
+      const worm = viewer.entities.add({
+        position: new Cesium.CallbackProperty(function(){
+          const p = progress01();
+          const idx = Math.max(0, Math.min(chordPositions.length-1, Math.floor(p * (chordPositions.length-1))));
+          return chordPositions[idx];
+        }, false),
+        point: {
+          pixelSize: 16,
+          color: Cesium.Color.fromCssColorString('#ffb347'),
+          outlineWidth: 2,
+          outlineColor: Cesium.Color.WHITE,
+          // Ensure the marker remains visible even when inside the Earth
+          disableDepthTestDistance: Number.POSITIVE_INFINITY
+        }
+      });
+
+      // Fit camera with north-up so Cupertino (west) appears on the left and New Delhi (east) on the right
+      (function setInitialView(){
+        const pts = [
+          Cesium.Cartesian3.fromDegrees(CUPERTINO.lon, CUPERTINO.lat, 0),
+          Cesium.Cartesian3.fromDegrees(NEW_DELHI.lon, NEW_DELHI.lat, 0)
+        ];
+        const bs = Cesium.BoundingSphere.fromPoints(pts);
+        const range = bs.radius * 3.0; // zoomed out a bit more
+        viewer.camera.flyToBoundingSphere(bs, {
+          duration: 0,
+          offset: new Cesium.HeadingPitchRange(
+            Math.PI,          // rotate 180° so Cupertino (west) is on the left, New Delhi (east) on the right
+            Cesium.Math.toRadians(-30), // pitch
+            range
+          )
+        });
+      })();
+      // Overlay path uses CallbackProperty; no manual updates required
+    </script>
+  </body>
+</html>
+
+

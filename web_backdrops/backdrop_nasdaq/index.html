@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backdrop – Nasdaq Studio</title>
+  <style>
+    :root {
+      --w: 1920px;
+      --h: 864px;
+      --ticker-h: 160px;
+      /* Curvature controls */
+      --curve-perspective: 1100px;
+      --curve-rotate-x: 0deg;   /* keep screen upright (no tilt away) */
+      --curve-rotate-y: 0deg;   /* no lateral twist */
+      /* Darker Nasdaq-blue gradient */
+      --bg-fallback-1: #0a4ea2;
+      --bg-fallback-2: #0a79b5;
+      --glass: rgba(10, 20, 40, 0.55);
+      --glass-strong: rgba(10, 20, 40, 0.8);
+      --green: #27d07d;
+      --red: #ff5a5a;
+      --text: #dce7ff;
+      --muted: #98a6c0;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      height: 100%;
+    }
+    /* Stage wraps everything so the capturer can screenshot just this element */
+    #stage {
+      position: relative;
+      width: var(--w);
+      height: var(--h);
+      margin: 0 auto;
+      perspective: var(--curve-perspective);
+      perspective-origin: 50% 50%;
+      transform-style: preserve-3d;
+      background: linear-gradient(135deg, var(--bg-fallback-1), var(--bg-fallback-2));
+      box-shadow: inset 0 0 120px rgba(0,0,0,0.55);
+      image-rendering: optimizeQuality;
+      overflow: hidden;
+    }
+    .curvature-inner {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      transform: rotateX(var(--curve-rotate-x)) rotateY(var(--curve-rotate-y));
+    }
+    .panel-stack {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    .panel {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      will-change: transform;
+      transform-origin: 50% 50%;
+      overflow: hidden;
+      backface-visibility: hidden;
+    }
+    .content-root {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    /* Optional background image if provided at assets/background.jpg */
+    #stage .bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: saturate(1.05) contrast(1.02) brightness(0.93);
+      opacity: 0.85;
+    }
+    /* Color overlay to softly harmonize with logo blue even with a photo bg */
+    #stage .blue-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 100% at 20% 50%, rgba(20, 138, 220, 0.08), rgba(0,0,0,0) 60%),
+        radial-gradient(120% 100% at 80% 50%, rgba(14, 163, 218, 0.06), rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(15, 120, 210, 0.05), rgba(15, 120, 210, 0.03));
+      mix-blend-mode: screen;
+    }
+    /* Top ticker row */
+    .ticker {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--ticker-h);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.55), rgba(0,0,0,0.2));
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      /* no per-plane tilt; curvature handled by segmented panels */
+      box-shadow: none;
+    }
+    .ticker-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px 28px 10px;
+      color: var(--text);
+      /* remove per-card borders to avoid vertical split lines */
+      border-right: none;
+    }
+    .ticker-item:last-child {
+      border-right: none;
+    }
+    .r1 { /* Company code */
+      font: 800 40px/1.1 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: 0.8px;
+      color: #eaf2ff;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+    .r2 { /* Percent and absolute delta */
+      font: 700 34px/1.1 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    .r3 { /* Absolute price */
+      font: 600 28px/1.1 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color: var(--muted);
+    }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .muted { color: var(--muted); font-weight: 500; }
+    /* Center Nasdaq logo block (static) */
+    .logo-wrap {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 28px;
+      border-radius: 12px;
+      background: transparent; /* fully transparent behind logo */
+      box-shadow: none; /* remove container shadow */
+    }
+    .logo-img {
+      height: 140px;
+      display: block;
+      filter: none; /* remove drop shadow to avoid dark halo */
+    }
+    .logo-fallback {
+      color: #bcd4ff;
+      font: 800 88px/1 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: 0.5px;
+      text-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    }
+    /* Gentle vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(70% 70% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 100%);
+      mix-blend-mode: multiply;
+    }
+    /* Curved-screen illusion: subtle side and top/bottom shading */
+    .curve {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: multiply;
+    }
+    .curve.left {
+      background: radial-gradient(48% 100% at 0% 50%, rgba(0,0,0,0.48), rgba(0,0,0,0) 56%);
+    }
+    .curve.right {
+      background: radial-gradient(48% 100% at 100% 50%, rgba(0,0,0,0.48), rgba(0,0,0,0) 56%);
+    }
+    .curve.top {
+      background: radial-gradient(100% 70% at 50% 0%, rgba(0,0,0,0.36), rgba(0,0,0,0) 66%);
+    }
+    .curve.bottom {
+      background: radial-gradient(100% 90% at 50% 100%, rgba(0,0,0,0.42), rgba(0,0,0,0) 66%);
+    }
+  </style>
+</head>
+<body>
+  <div id="stage" width="1920" height="864">
+    <div class="curvature-inner">
+      <div id="panel-stack" class="panel-stack">
+        <div class="panel">
+          <div class="content-root">
+            <!-- If you provide assets/background.jpg it will be used; otherwise gradient fallback shows -->
+            <img class="bg" src="assets/background.jpg" alt="" onerror="this.style.display='none'">
+            <div class="blue-overlay"></div>
+
+            <div class="ticker"></div>
+
+            <div class="logo-wrap">
+              <div class="logo">
+                <img class="logo-img" src="assets/nasdaq-2008-logo.svg" alt="Nasdaq" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
+                <div class="logo-fallback" style="display:none">Nasdaq</div>
+              </div>
+            </div>
+
+            <!-- Curved-screen shading layers -->
+            <div class="curve left"></div>
+            <div class="curve right"></div>
+            <div class="curve top"></div>
+            <div class="curve bottom"></div>
+            <div class="vignette"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STAGE = document.getElementById('stage');
+    const PANEL_STACK = document.getElementById('panel-stack');
+
+    // Required companies plus two additional examples
+    const SYMBOLS = [
+      { sym: 'GOOGL', base: 144.80 },  // Google
+      { sym: 'VMW', base: 180.00 },    // VMWare
+      { sym: 'N', base: 110.00 },      // NetSuite
+      { sym: 'SFSF', base: 40.00 },    // SuccessFactors
+      { sym: 'AAPL', base: 195.40 },   // additional
+      { sym: 'MSFT', base: 428.10 },   // additional
+    ];
+
+    // Deterministic pseudo-random in [0,1) from string+int
+    function rand01(key, n) {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < key.length; i++) {
+        h ^= key.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      h ^= n; h = Math.imul(h, 2246822519) ^ (h >>> 15);
+      h = Math.imul(h, 3266489917) ^ (h >>> 13);
+      return ((h >>> 0) % 100000) / 100000;
+    }
+
+    function formatPrice(v) {
+      return v.toFixed(2);
+    }
+    function formatDelta(d, refPrice) {
+      const pct = (d / refPrice) * 100;
+      const cls = d >= 0 ? 'up' : 'down';
+      const arrow = d >= 0 ? '▲' : '▼';
+      return { html: `<span class="${cls}">${arrow} ${pct.toFixed(2)}% ${d>=0?'+':''}${d.toFixed(2)}</span>`, cls };
+    }
+
+    function createTickerItem(data) {
+      const el = document.createElement('div');
+      el.className = 'ticker-item';
+      el.innerHTML = `
+        <div class="r1 sym">${data.sym}</div>
+        <div class="r2 delta muted">0.00%</div>
+        <div class="r3 price">$${formatPrice(data.price)}</div>
+      `;
+      return el;
+    }
+
+    // Build initial DOM
+    const state = {
+      lastSec: -1,
+      items: SYMBOLS.map(s => ({ sym: s.sym, price: s.base, prev: s.base, el: null })),
+    };
+
+    function mountTickers() {
+      const tickers = Array.from(document.querySelectorAll('.ticker'));
+      for (const t of tickers) {
+        t.innerHTML = '';
+        for (const item of state.items) {
+          const el = createTickerItem(item);
+          t.appendChild(el);
+        }
+      }
+      // After creating, map 'el' references from the first ticker for updates (others will be updated by index)
+      const firstTicker = tickers[0];
+      const els = Array.from(firstTicker.querySelectorAll('.ticker-item'));
+      state.items.forEach((item, idx) => { item.el = els[idx]; });
+    }
+
+    function updateAtSecond(sec) {
+      for (const item of state.items) {
+        // +/- up to ~0.5% per second, deterministic by symbol+sec
+        const r = rand01(item.sym, sec) - 0.5;
+        const step = item.price * 0.005 * r * 2.0;
+        item.prev = item.price;
+        item.price = Math.max(0.01, item.price + step);
+        const priceEl = item.el.querySelector('.price');
+        const deltaEl = item.el.querySelector('.delta');
+        priceEl.textContent = `$${formatPrice(item.price)}`;
+        const delta = item.price - item.prev;
+        const { html, cls } = formatDelta(delta, item.prev);
+        deltaEl.innerHTML = html;
+        deltaEl.className = 'r2 delta ' + cls;
+      }
+      // Mirror updated values into all other tickers by index
+      const tickers = Array.from(document.querySelectorAll('.ticker'));
+      for (let tIdx = 1; tIdx < tickers.length; tIdx++) {
+        const itemsEls = tickers[tIdx].querySelectorAll('.ticker-item');
+        state.items.forEach((item, idx) => {
+          const priceEl = itemsEls[idx].querySelector('.price');
+          const deltaEl = itemsEls[idx].querySelector('.delta');
+          priceEl.textContent = `$${formatPrice(item.price)}`;
+          const delta = item.price - item.prev;
+          const { html, cls } = formatDelta(delta, item.prev);
+          deltaEl.innerHTML = html;
+          deltaEl.className = 'r2 delta ' + cls;
+        });
+      }
+    }
+
+    function setupPanels(width, height) {
+      const count = 9;               // number of segments
+      const arc = 60;                // total degrees across the wall
+      const theta = arc / count;     // degrees per slice
+      const thetaRad = (Math.PI / 180) * theta;
+      const sliceW = Math.round(width / count);
+      // Geometric radius so adjacent panels meet at edges: chord c = 2 R sin(θ/2)
+      const radius = Math.round(sliceW / (2 * Math.sin(thetaRad / 2)));
+
+      const panelTemplate = PANEL_STACK.querySelector('.panel');
+      const bleed = 2; // small overlap to guard against rounding/AA
+
+      // Ensure template panel width and left
+      panelTemplate.style.width = (sliceW + 2 * bleed) + 'px';
+      panelTemplate.style.left = (-bleed) + 'px';
+
+      // Shift content so slice shows the correct region
+      const templateContent = panelTemplate.querySelector('.content-root');
+      templateContent.style.width = width + 'px';
+      templateContent.style.height = height + 'px';
+      templateContent.style.transform = 'translateX(0px)'; // first slice shows leftmost
+
+      // Create remaining panels
+      for (let i = 1; i < count; i++) {
+        const clone = panelTemplate.cloneNode(true);
+        clone.style.width = (sliceW + 2 * bleed) + 'px';
+        clone.style.left = (i * sliceW - bleed) + 'px';
+        const content = clone.querySelector('.content-root');
+        content.style.width = width + 'px';
+        content.style.height = height + 'px';
+        content.style.transform = `translateX(${-i * sliceW}px)`;
+        PANEL_STACK.appendChild(clone);
+      }
+
+      // Apply 3D rotation per panel
+      const panels = Array.from(PANEL_STACK.querySelectorAll('.panel'));
+      panels.forEach((panel, i) => {
+        // Center angle of slice i
+        const ang = (-arc / 2) + ((i + 0.5) * theta);
+        panel.style.transform = `translateZ(${radius}px) rotateY(${ang}deg)`;
+        panel.style.transformOrigin = '50% 50%';
+      });
+    }
+
+    window.__init = (config) => {
+      if (config && config.width && config.height) {
+        STAGE.style.setProperty('--w', config.width + 'px');
+        STAGE.style.setProperty('--h', config.height + 'px');
+        STAGE.style.width = config.width + 'px';
+        STAGE.style.height = config.height + 'px';
+      }
+      setupPanels(parseInt(getComputedStyle(STAGE).getPropertyValue('--w')), parseInt(getComputedStyle(STAGE).getPropertyValue('--h')));
+      mountTickers();
+    };
+
+    // Called every frame by the capturer; we step only on new integer seconds
+    window.__render = (t) => {
+      const sec = Math.floor(t);
+      if (sec !== state.lastSec) {
+        state.lastSec = sec;
+        updateAtSecond(sec);
+      }
+    };
+  </script>
+</body>
+</html>
+
+

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backdrop 001</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+    }
+    #stage {
+      display: block;
+      width: 1920px;
+      height: 864px;
+      image-rendering: optimizeQuality;
+    }
+    .content {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      color: rgba(255,255,255,0.9);
+      font: 700 72px/1.2 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage" width="1920" height="864"></canvas>
+  <div class="content">Backdrop 001</div>
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    const W = canvas.width, H = canvas.height;
+
+    function drawGradient(t) {
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, `hsl(${(t*20)%360}, 70%, 45%)`);
+      g.addColorStop(1, `hsl(${((t*20)+120)%360}, 70%, 45%)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    function drawSubtleNoise(t) {
+      // Lightweight procedural dots to avoid heavy per-pixel loops every frame
+      const step = 24;
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = '#000';
+      for (let y = 0; y < H; y += step) {
+        for (let x = 0; x < W; x += step) {
+          const r = 2 + 1.5 * Math.sin(0.3 * x + 0.3 * y + 0.7 * t);
+          ctx.beginPath();
+          ctx.arc(x + (x % 7), y + (y % 11), r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawMovingAccents(t) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6;
+        const x = (W * (a + 0.2 * Math.sin(t * 0.5 + i))) % W;
+        const y = (H * (a + 0.2 * Math.cos(t * 0.6 + i))) % H;
+        const r = 80 + 60 * Math.sin(t * 0.9 + i * 1.7);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+        g.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    window.__init = (config) => {
+      // Optionally adapt to provided size
+      if (config && config.width && config.height) {
+        canvas.width = config.width;
+        canvas.height = config.height;
+      }
+    };
+
+    window.__render = (t) => {
+      drawGradient(t);
+      drawSubtleNoise(t);
+      drawMovingAccents(t);
+    };
+  </script>
+</body>
+</html>
+
+

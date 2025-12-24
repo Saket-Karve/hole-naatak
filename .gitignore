@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+
+# Node (if used for web tools)
+node_modules/
+
+# Editor
+.idea/
+.vscode/
+
+# Build/outputs
+outputs/
+web_backdrops/outputs/
+
+# Playwright artifacts
+playwright-report/
+test-results/
+
+
