@@ -1,0 +1,43 @@
+name: Deploy Gravity Train to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "gravitytrain/**"
+      - ".github/workflows/deploy-gravitytrain.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Upload Gravity Train site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Publish ONLY the gravitytrain subdirectory
+          path: gravitytrain
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+
