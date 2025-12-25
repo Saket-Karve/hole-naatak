@@ -167,20 +167,32 @@
       }
       @media (max-width: 820px) {
         header{flex-wrap:wrap}
-        .progress-card{width:min(92vw,520px)}
-        .panel{width:calc(100vw - 24px);left:12px;right:12px;top:auto;bottom:132px}
-        .panel.right{right:12px}
-        .distance-tag{right:12px;left:12px;bottom:16px;top:auto}
+        /* Compact progress card but keep dates visible */
+        .progress-card{
+          width:min(92vw,480px);
+          top:58px;
+          padding:8px 10px;
+        }
+        .progress-card .worm{width:18px;height:18px}
+        .progress-card .bar{height:8px}
+        .progress-card .pct{width:46px;font-size:12px}
+        .progress-card .dates{font-size:11px;margin-top:6px}
+        /* Mobile toggles visible */
         .unit-toggle{display:flex}
-        .details-toggle{display:inline-block}
-        /* Collapsed by default on mobile */
+        .details-toggle{display:inline-block;bottom:18px}
+        /* Panels are collapsible: hidden by default, shown when body[data-panels="open"] */
         body:not([data-panels="open"]) .panel{display:none}
-        /* Show only one panel at a time when open */
-        body[data-panels="open"][data-units="imperial"] .panel{display:block}
+        body[data-panels="open"] .panel{
+          display:block;
+          width:calc(100vw - 24px);
+          left:12px;right:12px;top:auto;bottom:110px;
+        }
+        /* Only one units panel visible when open */
         body[data-panels="open"][data-units="imperial"] .panel.right{display:none}
-        body[data-panels="open"][data-units="metric"] .panel.right{display:block}
         body[data-panels="open"][data-units="metric"] .panel{display:none}
         body[data-panels="open"][data-units="metric"] .panel.right{display:block}
+        /* Distance tag: remove entirely on mobile */
+        .distance-tag{display:none !important}
       }
     </style>
   </head>
