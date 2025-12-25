@@ -90,6 +90,11 @@
         box-shadow:0 10px 40px rgba(0,0,0,.35);backdrop-filter: blur(10px);
         pointer-events:auto;
       }
+      /* Mobile unit + details toggles */
+      .unit-toggle{display:none;position:absolute;left:50%;transform:translateX(-50%);top:8px;z-index:13;background:var(--panel);border:1px solid var(--panel-border);border-radius:999px;padding:6px 8px;gap:6px}
+      .unit-toggle button{background:transparent;border:0;color:#eaf2ff;font-weight:800;padding:6px 10px;border-radius:999px;cursor:pointer}
+      .unit-toggle button.active{background:rgba(255,255,255,.12)}
+      .details-toggle{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:82px;z-index:13;background:var(--panel);border:1px solid var(--panel-border);border-radius:999px;padding:8px 12px;color:#eaf2ff;font-weight:800;cursor:pointer}
       /* Promo banner */
       .promo{
         position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
@@ -166,6 +171,16 @@
         .panel{width:calc(100vw - 24px);left:12px;right:12px;top:auto;bottom:132px}
         .panel.right{right:12px}
         .distance-tag{right:12px;left:12px;bottom:16px;top:auto}
+        .unit-toggle{display:flex}
+        .details-toggle{display:inline-block}
+        /* Collapsed by default on mobile */
+        body:not([data-panels="open"]) .panel{display:none}
+        /* Show only one panel at a time when open */
+        body[data-panels="open"][data-units="imperial"] .panel{display:block}
+        body[data-panels="open"][data-units="imperial"] .panel.right{display:none}
+        body[data-panels="open"][data-units="metric"] .panel.right{display:block}
+        body[data-panels="open"][data-units="metric"] .panel{display:none}
+        body[data-panels="open"][data-units="metric"] .panel.right{display:block}
       }
     </style>
   </head>
@@ -182,6 +197,13 @@
         <div id="scene-wrap">
           <div id="cesiumContainer" aria-label="Realistic Earth with tunnel arc"></div>
         </div>
+
+        <!-- Mobile controls -->
+        <div class="unit-toggle" id="unitToggle" role="tablist" aria-label="Units (mobile)">
+          <button id="btnImperial" class="active" type="button" aria-selected="true">Imperial</button>
+          <button id="btnMetric" type="button" aria-selected="false">Metric</button>
+        </div>
+        <button id="detailsToggle" class="details-toggle" type="button" aria-expanded="false">Show details</button>
 
         <!-- Imperial panel on the left (US) -->
         <aside class="panel" aria-label="Digging Status (Imperial)">
@@ -620,6 +642,55 @@
         });
       })();
       // Overlay path uses CallbackProperty; no manual updates required
+
+      // Mobile units + details toggles
+      (function wireMobileToggles(){
+        const body = document.body;
+        // default collapsed panels and imperial units on mobile
+        if (window.innerWidth <= 820) {
+          body.setAttribute('data-panels', 'closed');
+          body.setAttribute('data-units', 'imperial');
+        }
+        const btnImp = document.getElementById('btnImperial');
+        const btnMet = document.getElementById('btnMetric');
+        const detailsBtn = document.getElementById('detailsToggle');
+        function setUnits(u){
+          body.setAttribute('data-units', u);
+          const impActive = u === 'imperial';
+          if (btnImp && btnMet) {
+            btnImp.classList.toggle('active', impActive);
+            btnImp.setAttribute('aria-selected', String(impActive));
+            btnMet.classList.toggle('active', !impActive);
+            btnMet.setAttribute('aria-selected', String(!impActive));
+          }
+        }
+        function setPanels(open){
+          body.setAttribute('data-panels', open ? 'open' : 'closed');
+          if (detailsBtn) {
+            detailsBtn.textContent = open ? 'Hide details' : 'Show details';
+            detailsBtn.setAttribute('aria-expanded', String(open));
+          }
+          // Reposition distance tag when panels open/close (desktop code guards on width)
+          requestAnimationFrame(positionDistanceTag);
+        }
+        if (btnImp) btnImp.addEventListener('click', ()=>setUnits('imperial'));
+        if (btnMet) btnMet.addEventListener('click', ()=>setUnits('metric'));
+        if (detailsBtn) detailsBtn.addEventListener('click', ()=>{
+          const open = body.getAttribute('data-panels') !== 'open';
+          setPanels(open);
+        });
+        // Initialize button states
+        setUnits(body.getAttribute('data-units') || 'imperial');
+        setPanels(body.getAttribute('data-panels') === 'open');
+        window.addEventListener('resize', ()=>{
+          // Reset to collapsed on small screens to keep globe visible
+          if (window.innerWidth <= 820) {
+            setPanels(false);
+          } else {
+            // desktop – ensure both panels visible (CSS handles)
+          }
+        });
+      })();
     </script>
   </body>
 </html>
