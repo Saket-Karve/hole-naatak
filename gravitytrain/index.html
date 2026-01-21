@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gravity Train — Earth Tunnel Project</title>
     <meta name="description" content="Gravity Train: a science‑fiction earth-tunnel between Cupertino and New Delhi. Live digging status, distance, and progress." />
+    <!-- Preconnect to external resources for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="preconnect" href="https://api.cesium.com" />
+    <link rel="preconnect" href="https://tile.openstreetmap.org" />
+    <!-- Optimized fonts: reduced weights, added font-display swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Orbitron:wght@700&display=swap" rel="stylesheet" />
     <style>
       /* ===== CSS VARIABLES ===== */
       :root{
@@ -37,7 +43,7 @@
         --orange-600: #ea580c;
       }
       *{box-sizing:border-box;margin:0;padding:0}
-      html,body{height:100%;font-family:Inter,Montserrat,system-ui,sans-serif;color:var(--text);overflow-x:hidden}
+      html,body{height:100%;font-family:Inter,system-ui,sans-serif;color:var(--text);overflow-x:hidden}
       a{color:var(--glow);text-decoration:none}
       
       /* ===== VIEW SYSTEM ===== */
@@ -53,11 +59,18 @@
       .globe-nav-link:hover{background:linear-gradient(180deg,rgba(99,102,241,0.5),rgba(99,102,241,0.25));color:white}
       .logo{width:40px;height:40px;border-radius:8px;display:block;object-fit:cover;object-position:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
       .brand{display:flex;flex-direction:column;line-height:1}
-      .brand .title{font-family:Orbitron,Montserrat,sans-serif;letter-spacing:0.06em;font-weight:800;font-size:20px;text-transform:uppercase;text-shadow:0 0 18px rgba(0,209,255,.25)}
+      .brand .title{font-family:Orbitron,system-ui,sans-serif;letter-spacing:0.06em;font-weight:700;font-size:20px;text-transform:uppercase;text-shadow:0 0 18px rgba(0,209,255,.25)}
       .brand .subtitle{font-size:12px;color:var(--muted)}
       #globe-view main{position:relative;pointer-events:auto;min-height:calc(100dvh - 96px)}
       #scene-wrap{position:absolute;inset:0;pointer-events:auto}
       #cesiumContainer{width:100%;height:100%;display:block}
+      
+      /* Loading indicator */
+      .globe-loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a2744 0%,#0d1524 100%);z-index:5;transition:opacity 0.5s ease}
+      .globe-loader.hidden{opacity:0;pointer-events:none}
+      .globe-loader-spinner{width:60px;height:60px;border:4px solid rgba(0,209,255,0.2);border-top-color:#00d1ff;border-radius:50%;animation:spin 1s linear infinite}
+      .globe-loader-text{margin-top:20px;color:var(--glow);font-weight:600;font-size:14px;letter-spacing:0.05em}
+      @keyframes spin{to{transform:rotate(360deg)}}
       
       /* Globe panels */
       .panel{position:absolute;left:16px;top:96px;width:320px;backdrop-filter:blur(10px);background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);pointer-events:auto;transition:width 0.3s ease}
@@ -226,10 +239,42 @@
       .facts-value.purple{color:var(--purple-400)}
       .facts-value.green{color:#4ade80}
       
+      /* Mobile hamburger menu */
+      .mobile-menu-btn{display:none;width:40px;height:40px;border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.1);border-radius:8px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+      .mobile-menu-btn span{display:block;width:20px;height:2px;background:var(--indigo-300);border-radius:2px;transition:all 0.3s}
+      .mobile-menu-btn.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+      .mobile-menu-btn.open span:nth-child(2){opacity:0}
+      .mobile-menu-btn.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+      
       /* Mobile nav */
       @media(max-width:768px){
-        .naatak-nav-links{display:none}
-        .naatak-nav-links.mobile-open{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:var(--slate-950);padding:1rem;border-bottom:1px solid rgba(99,102,241,0.2)}
+        .mobile-menu-btn{display:flex}
+        .naatak-nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--slate-950);padding:1rem;border-bottom:1px solid rgba(99,102,241,0.2);flex-direction:column;gap:0.5rem;z-index:100}
+        .naatak-nav-links.mobile-open{display:flex}
+        .naatak-nav-links a{padding:0.75rem 1rem;border-radius:8px}
+        .naatak-nav-links a:hover{background:rgba(99,102,241,0.1)}
+        .naatak-nav-inner{position:relative}
+        .hero-title{font-size:2.25rem}
+        .hero-desc{font-size:1rem}
+        .hero-buttons{gap:0.75rem}
+        .naatak-btn-lg{padding:0.625rem 1.5rem;font-size:1rem}
+        .section{padding:3rem 1rem}
+        .section-title{font-size:1.75rem}
+        .card{padding:1.5rem}
+        .naatak-footer-links{flex-direction:column;gap:0.75rem;text-align:center}
+      }
+      
+      /* Globe view mobile improvements */
+      @media(max-width:480px){
+        #globe-view header{padding:10px 12px;gap:10px}
+        .globe-header-left{gap:10px}
+        .logo{width:32px;height:32px}
+        .brand .title{font-size:14px}
+        .brand .subtitle{font-size:10px}
+        .globe-nav-link{padding:6px 10px;font-size:12px}
+        .progress-card{top:48px;padding:6px 8px}
+        .progress-card .dates{font-size:10px}
+        .simulate-btn{padding:10px 18px;font-size:14px;bottom:80px}
       }
     </style>
   </head>
@@ -250,6 +295,10 @@
         <main>
           <div id="scene-wrap">
             <div id="cesiumContainer" aria-label="Realistic Earth with tunnel arc"></div>
+            <div id="globeLoader" class="globe-loader">
+              <div class="globe-loader-spinner"></div>
+              <div class="globe-loader-text">Loading Earth...</div>
+            </div>
           </div>
           
           <!-- Mobile controls -->
@@ -345,12 +394,17 @@
             <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
             <span class="naatak-logo-text">GravityTrain</span>
           </div>
+          <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <div class="naatak-nav-links" id="navLinks">
-            <a onclick="navigateTo('globe', true)">Show Digging Progress</a>
-            <a onclick="navigateTo('simulation')">Simulation</a>
-            <a onclick="navigateTo('concepts')">Concepts</a>
-            <a onclick="navigateTo('history')">History</a>
-            <a onclick="navigateTo('about')">About</a>
+            <a onclick="navigateTo('globe', true); closeMobileMenu()">Show Digging Progress</a>
+            <a onclick="navigateTo('simulation'); closeMobileMenu()">Simulation</a>
+            <a onclick="navigateTo('concepts'); closeMobileMenu()">Concepts</a>
+            <a onclick="navigateTo('history'); closeMobileMenu()">History</a>
+            <a onclick="navigateTo('about'); closeMobileMenu()">About</a>
             <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
               <button class="naatak-btn naatak-btn-amber">Book Tickets <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
             </a>
@@ -554,9 +608,27 @@
     <!-- ===== ABOUT VIEW ===== -->
     <div id="about-view" class="view naatak-page"></div>
 
-    <!-- CesiumJS (globe engine) -->
+    <!-- CesiumJS (globe engine) - async loading for better performance -->
     <link rel="stylesheet" href="https://unpkg.com/cesium@1.119/Build/Cesium/Widgets/widgets.css" />
-    <script src="https://unpkg.com/cesium@1.119/Build/Cesium/Cesium.js"></script>
+    <script>
+      // Async load Cesium for better initial page performance
+      window.cesiumLoaded = false;
+      window.cesiumCallbacks = [];
+      function onCesiumLoaded(cb) {
+        if (window.cesiumLoaded) cb();
+        else window.cesiumCallbacks.push(cb);
+      }
+      (function() {
+        var script = document.createElement('script');
+        script.src = 'https://unpkg.com/cesium@1.119/Build/Cesium/Cesium.js';
+        script.async = true;
+        script.onload = function() {
+          window.cesiumLoaded = true;
+          window.cesiumCallbacks.forEach(function(cb) { cb(); });
+        };
+        document.head.appendChild(script);
+      })();
+    </script>
     
     <script>
       // ===== GLOBAL STATE =====
@@ -695,6 +767,25 @@
         const panel = document.getElementById(panelId);
         if (panel) {
           panel.classList.toggle('collapsed');
+        }
+      }
+      
+      // ===== MOBILE MENU TOGGLE =====
+      function toggleMobileMenu() {
+        const navLinks = document.querySelector('.naatak-nav-links');
+        const menuBtn = document.querySelector('.mobile-menu-btn');
+        if (navLinks && menuBtn) {
+          navLinks.classList.toggle('mobile-open');
+          menuBtn.classList.toggle('open');
+        }
+      }
+      
+      function closeMobileMenu() {
+        const navLinks = document.querySelector('.naatak-nav-links');
+        const menuBtn = document.querySelector('.mobile-menu-btn');
+        if (navLinks && menuBtn) {
+          navLinks.classList.remove('mobile-open');
+          menuBtn.classList.remove('open');
         }
       }
       
@@ -907,7 +998,7 @@
             position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
             label: {
               text,
-              font: '700 14px Montserrat, sans-serif',
+              font: '700 14px Inter, sans-serif',
               fillColor: Cesium.Color.WHITE,
               showBackground: true,
               backgroundColor: Cesium.Color.fromAlpha(Cesium.Color.BLACK, 0.6),
@@ -989,6 +1080,12 @@
             range
           )
         });
+        
+        // Hide loading indicator after globe is ready
+        setTimeout(() => {
+          const loader = document.getElementById('globeLoader');
+          if (loader) loader.classList.add('hidden');
+        }, 300);
       }
       
       // ===== LOAD SUB-VIEWS =====
@@ -1000,12 +1097,17 @@
                 <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
                 <span class="naatak-logo-text">GravityTrain</span>
               </div>
+              <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
               <div class="naatak-nav-links">
-                <a onclick="navigateTo('globe', true)">Show Digging Progress</a>
-                <a onclick="navigateTo('simulation')" class="${activeView === 'simulation' ? 'active' : ''}">Simulation</a>
-                <a onclick="navigateTo('concepts')" class="${activeView === 'concepts' ? 'active' : ''}">Concepts</a>
-                <a onclick="navigateTo('history')" class="${activeView === 'history' ? 'active' : ''}">History</a>
-                <a onclick="navigateTo('about')" class="${activeView === 'about' ? 'active' : ''}">About</a>
+                <a onclick="navigateTo('globe', true); closeMobileMenu()">Show Digging Progress</a>
+                <a onclick="navigateTo('simulation'); closeMobileMenu()" class="${activeView === 'simulation' ? 'active' : ''}">Simulation</a>
+                <a onclick="navigateTo('concepts'); closeMobileMenu()" class="${activeView === 'concepts' ? 'active' : ''}">Concepts</a>
+                <a onclick="navigateTo('history'); closeMobileMenu()" class="${activeView === 'history' ? 'active' : ''}">History</a>
+                <a onclick="navigateTo('about'); closeMobileMenu()" class="${activeView === 'about' ? 'active' : ''}">About</a>
                 <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
                   <button class="naatak-btn naatak-btn-amber">Book Tickets</button>
                 </a>
@@ -1371,12 +1473,16 @@
       document.addEventListener('DOMContentLoaded', () => {
         initUI();
         wireEvents();
-        initCesium();
         
-        // Auto-run simulation on first load
-        setTimeout(() => {
-          runSimulation(true);
-        }, 1000);
+        // Wait for Cesium to load asynchronously before initializing
+        onCesiumLoaded(() => {
+          initCesium();
+          
+          // Auto-run simulation after Cesium is ready
+          setTimeout(() => {
+            runSimulation(true);
+          }, 500);
+        });
       });
     </script>
   </body>
