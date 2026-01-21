@@ -363,7 +363,7 @@
       document.getElementById('dirtCubeImp').textContent = `${sideFtRounded} ft × ${sideFtRounded} ft × ${sideFtRounded} ft`;
 
       // Progress (interactive + simulated)
-      const DEFAULT_PROGRESS = 0.10; // default 10%
+      const DEFAULT_PROGRESS = 0.99; // default 10%
       let progressFraction = DEFAULT_PROGRESS;
       function progress01(){ return progressFraction; }
       function dateForProgress(p){ return new Date(START.getTime() + p * (END - START)); }
@@ -372,7 +372,7 @@
         const pct = Math.round(progressFraction*100);
         document.getElementById('pct').textContent = `${pct}%`;
         const dt = dateForProgress(progressFraction).toLocaleString();
-        document.getElementById('wormText').textContent = `${pct}% [Hypothetical: ${dt}]`;
+        document.getElementById('wormText').textContent = `${pct}% [${dt}]`;
         document.getElementById('fill').style.width = `${pct}%`;
         // Update progressed overlay (drawn atop the bright blue base)
         try {
@@ -565,57 +565,33 @@
         return pts;
       }
       const chordPositions = buildChord(CUPERTINO.lon, CUPERTINO.lat, NEW_DELHI.lon, NEW_DELHI.lat, 240);
+      
+      // Base tunnel: Yellow at 80% opacity (remaining portion)
+      const YELLOW_TUNNEL = Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.8);
+      // Progress overlay: Red at 80% opacity (completed portion)
+      const RED_PROGRESS = Cesium.Color.fromCssColorString('#DC143C').withAlpha(0.8);
+      
       const chordEntity = viewer.entities.add({
         name: 'The Gravity Tunnel (interior chord)',
         polyline: {
           positions: chordPositions,
-          width: 20,
-          // Visible normally
-          material: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.22, color: Cesium.Color.fromCssColorString('#00d4ff') }),
-          // And also visible when occluded by the globe (so it “shows through” Earth)
-          depthFailMaterial: new Cesium.PolylineGlowMaterialProperty({ glowPower: 0.22, color: Cesium.Color.fromAlpha(Cesium.Color.CYAN, 0.75) })
+          width: 12,
+          material: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL),
+          depthFailMaterial: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL)
         }
       });
-      // Progress overlay polyline (drawn atop, slightly thinner and gray)
+      
+      // Progress overlay polyline (red, grows as progress increases)
       const progressEntity = viewer.entities.add({
         name: 'Tunnel Progress Overlay',
         polyline: {
-          // Positions driven by current progressFraction via CallbackProperty
           positions: new Cesium.CallbackProperty(function(){
             const idx = Math.max(1, Math.floor(progressFraction * (chordPositions.length - 1)));
             return chordPositions.slice(0, idx + 1);
           }, false),
-          width: 18,
-          material: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#d5dbe2').withAlpha(1.0)),
-          depthFailMaterial: new Cesium.ColorMaterialProperty(Cesium.Color.fromCssColorString('#d5dbe2').withAlpha(1.0))
-        }
-      });
-
-      // Cylindrical tube (hollow) along the chord using polyline volumes
-      function circleShape(radius, segments=48){
-        const pts = [];
-        for(let i=0;i<segments;i++){
-          const a = (i/segments)*Math.PI*2;
-          pts.push(new Cesium.Cartesian2(Math.cos(a)*radius, Math.sin(a)*radius));
-        }
-        return pts;
-      }
-      const tubeOuterRadiusM = 50000; // 50 km visual thickness
-      const tubeInnerRadiusM = 32000; // inner hollow radius
-      // Outer translucent wall
-      const tubeOuterEntity = viewer.entities.add({
-        polylineVolume: {
-          positions: chordPositions,
-          shape: circleShape(tubeOuterRadiusM),
-          material: Cesium.Color.fromCssColorString('#00eaff').withAlpha(0.18)
-        }
-      });
-      // Inner dark core to create hollow appearance
-      const tubeInnerEntity = viewer.entities.add({
-        polylineVolume: {
-          positions: chordPositions,
-          shape: circleShape(tubeInnerRadiusM),
-          material: Cesium.Color.fromCssColorString('#061426').withAlpha(0.9)
+          width: 12,
+          material: new Cesium.ColorMaterialProperty(RED_PROGRESS),
+          depthFailMaterial: new Cesium.ColorMaterialProperty(RED_PROGRESS)
         }
       });
 
