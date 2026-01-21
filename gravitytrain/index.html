@@ -6,8 +6,9 @@
     <title>Gravity Train — Earth Tunnel Project</title>
     <meta name="description" content="Gravity Train: a science‑fiction earth-tunnel between Cupertino and New Delhi. Live digging status, distance, and progress." />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Orbitron:wght@600;800&display=swap" rel="stylesheet" />
     <style>
+      /* ===== CSS VARIABLES ===== */
       :root{
         --bg: #0b1020;
         --panel: rgba(14,20,40,0.72);
@@ -17,298 +18,612 @@
         --ok: #25d37d;
         --muted: #9fb0c2;
         --text: #e6eef7;
+        /* Naatak colors */
+        --slate-950: #020617;
+        --slate-900: #0f172a;
+        --slate-800: #1e293b;
+        --slate-700: #334155;
+        --slate-400: #94a3b8;
+        --slate-300: #cbd5e1;
+        --indigo-950: #1e1b4b;
+        --indigo-900: #312e81;
+        --indigo-600: #4f46e5;
+        --indigo-500: #6366f1;
+        --indigo-400: #818cf8;
+        --indigo-300: #a5b4fc;
+        --purple-600: #9333ea;
+        --purple-400: #c084fc;
+        --amber-500: #f59e0b;
+        --orange-600: #ea580c;
       }
-      *{box-sizing:border-box}
-      html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 60% -10%, #2f57a8 0%, #244989 45%, #173467 100%) fixed;font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,'Noto Sans',sans-serif;color:var(--text);overflow:hidden}
+      *{box-sizing:border-box;margin:0;padding:0}
+      html,body{height:100%;font-family:Inter,Montserrat,system-ui,sans-serif;color:var(--text);overflow-x:hidden}
       a{color:var(--glow);text-decoration:none}
-      .chrome{
-        position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;pointer-events:none;
-      }
-      header{
-        display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--panel-border);background:linear-gradient(180deg,#0f1730,transparent);
-        pointer-events:auto;
-      }
-      .logo{
-        width:40px;height:40px;border-radius:8px;display:block;
-        object-fit:cover;object-position:center;
-        box-shadow:0 2px 8px rgba(0,0,0,.3);
-      }
-      .brand{
-        display:flex;flex-direction:column;line-height:1;
-      }
-      .brand .title{
-        font-family:Orbitron,Montserrat,sans-serif;letter-spacing:0.06em;font-weight:800;font-size:20px;text-transform:uppercase;
-        text-shadow:0 0 18px rgba(0,209,255,.25);
-      }
+      
+      /* ===== VIEW SYSTEM ===== */
+      .view{display:none;min-height:100vh}
+      .view.active{display:block}
+      
+      /* ===== GLOBE VIEW STYLES ===== */
+      #globe-view{background:radial-gradient(1200px 800px at 60% -10%, #2f57a8 0%, #244989 45%, #173467 100%) fixed;overflow:hidden}
+      #globe-view .chrome{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr auto;pointer-events:none}
+      #globe-view header{display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--panel-border);background:linear-gradient(180deg,#0f1730,transparent);pointer-events:auto;justify-content:space-between}
+      .globe-header-left{display:flex;align-items:center;gap:16px}
+      .globe-nav-link{padding:8px 16px;border-radius:8px;background:linear-gradient(180deg,rgba(99,102,241,0.3),rgba(99,102,241,0.15));color:#c7d2fe;font-weight:700;font-size:14px;border:1px solid rgba(99,102,241,0.4);cursor:pointer;transition:all 0.2s}
+      .globe-nav-link:hover{background:linear-gradient(180deg,rgba(99,102,241,0.5),rgba(99,102,241,0.25));color:white}
+      .logo{width:40px;height:40px;border-radius:8px;display:block;object-fit:cover;object-position:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+      .brand{display:flex;flex-direction:column;line-height:1}
+      .brand .title{font-family:Orbitron,Montserrat,sans-serif;letter-spacing:0.06em;font-weight:800;font-size:20px;text-transform:uppercase;text-shadow:0 0 18px rgba(0,209,255,.25)}
       .brand .subtitle{font-size:12px;color:var(--muted)}
-
-      main{position:relative;pointer-events:auto;min-height:calc(100dvh - 96px)}
+      #globe-view main{position:relative;pointer-events:auto;min-height:calc(100dvh - 96px)}
       #scene-wrap{position:absolute;inset:0;pointer-events:auto}
       #cesiumContainer{width:100%;height:100%;display:block}
-
-      /* Left status panel */
-      .panel{
-        position:absolute;left:16px;top:96px;width:320px;backdrop-filter: blur(10px);
-        background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;padding:14px 14px 12px 14px;box-shadow:0 10px 40px rgba(0,0,0,.35);
-        pointer-events:auto;
-      }
+      
+      /* Globe panels */
+      .panel{position:absolute;left:16px;top:96px;width:320px;backdrop-filter:blur(10px);background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;padding:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);pointer-events:auto;transition:width 0.3s ease}
       .panel.right{left:auto;right:16px}
-      .panel h3{
-        margin:6px 8px 10px 8px;font-weight:800;letter-spacing:.06em;color:#cfe7ff;font-size:13px;text-transform:uppercase;opacity:.9
-      }
-      .kv{
-        display:grid;grid-template-columns:1fr auto;gap:8px 10px;margin:10px 8px 6px 8px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08)
-      }
+      .panel.collapsed{width:auto;min-width:160px}
+      .panel-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin:6px 8px 10px 8px}
+      .panel-header h3{margin:0;font-weight:800;letter-spacing:.06em;color:#cfe7ff;font-size:13px;text-transform:uppercase;opacity:.9}
+      .panel-toggle{width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.02));color:#cfe7ff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.3s ease, background 0.2s}
+      .panel-toggle:hover{background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.05))}
+      .panel.collapsed .panel-toggle{transform:rotate(180deg)}
+      .panel-content{overflow:hidden;transition:max-height 0.3s ease, opacity 0.3s ease;max-height:500px;opacity:1}
+      .panel.collapsed .panel-content{max-height:0;opacity:0}
+      .panel h3{margin:6px 8px 10px 8px;font-weight:800;letter-spacing:.06em;color:#cfe7ff;font-size:13px;text-transform:uppercase;opacity:.9}
+      .kv{display:grid;grid-template-columns:1fr auto;gap:8px 10px;margin:10px 8px 6px 8px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08)}
       .kv .k{color:#a9bfd6}
       .kv .v{font-weight:600}
       .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);margin:10px 0}
-
+      
       /* Progress strip */
-      .progress{
-        display:flex;align-items:center;gap:10px;margin:12px 8px 6px 8px
-      }
-      .worm{
-        width:26px;height:26px;border-radius:20px;background:radial-gradient(circle at 35% 35%, #fff 0%, #ffe6a7 25%, #ffb347 60%, #b66d13 100%);
-        box-shadow:0 0 18px rgba(255,179,71,.7), 0 0 36px rgba(255,179,71,.35);
-        border:1px solid rgba(255,255,255,.35);
-      }
+      .progress{display:flex;align-items:center;gap:10px;margin:12px 8px 6px 8px}
+      .worm{width:26px;height:26px;border-radius:20px;background:radial-gradient(circle at 35% 35%, #fff 0%, #ffe6a7 25%, #ffb347 60%, #b66d13 100%);box-shadow:0 0 18px rgba(255,179,71,.7), 0 0 36px rgba(255,179,71,.35);border:1px solid rgba(255,255,255,.35)}
       .bar{flex:1;height:10px;background:rgba(255,255,255,.08);border-radius:999px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.12)}
       .fill{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#00e1ff,#00ffa6);box-shadow:0 0 22px rgba(0,255,214,.45);border-radius:inherit}
       .pct{width:58px;text-align:right;color:#d1ffe9;font-weight:700}
       .dates{margin:8px 8px 4px 8px;color:var(--muted);font-size:12px}
-      .btn{
-        display:inline-flex;align-items:center;gap:8px;margin:10px 8px 6px 8px;padding:10px 14px;border-radius:10px;
-        background:linear-gradient(180deg,#1f4090,#183671);color:#eaf2ff;border:1px solid rgba(255,255,255,.22);font-weight:800;letter-spacing:.02em;cursor:pointer;
-        box-shadow:0 8px 18px rgba(0,0,0,.25), inset 0 0 10px rgba(255,255,255,.07);
-      }
+      .btn{display:inline-flex;align-items:center;gap:8px;margin:10px 8px 6px 8px;padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#1f4090,#183671);color:#eaf2ff;border:1px solid rgba(255,255,255,.22);font-weight:800;letter-spacing:.02em;cursor:pointer;box-shadow:0 8px 18px rgba(0,0,0,.25), inset 0 0 10px rgba(255,255,255,.07)}
       .btn:hover{filter:brightness(1.08)}
       .btn:active{transform:translateY(1px)}
+      
       /* Center progress card */
-      .progress-card{
-        position:absolute;left:50%;top:68px;transform:translateX(-50%);z-index:12;
-        width:min(640px,70vw);padding:10px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--panel-border);
-        box-shadow:0 10px 40px rgba(0,0,0,.35);backdrop-filter: blur(10px);
-        pointer-events:auto;
-      }
-      /* Mobile unit + details toggles */
+      .progress-card{position:absolute;left:50%;top:68px;transform:translateX(-50%);z-index:12;width:min(640px,70vw);padding:10px 12px;border-radius:12px;background:var(--panel);border:1px solid var(--panel-border);box-shadow:0 10px 40px rgba(0,0,0,.35);backdrop-filter:blur(10px);pointer-events:auto}
+      
+      /* Simulate button */
+      .simulate-btn{position:absolute;left:50%;bottom:100px;transform:translateX(-50%);z-index:13;padding:12px 24px;border-radius:12px;background:linear-gradient(180deg,#f59e0b,#ea580c);color:white;font-weight:800;font-size:16px;border:none;cursor:pointer;box-shadow:0 8px 24px rgba(245,158,11,.4)}
+      .simulate-btn:hover{filter:brightness(1.1)}
+      .simulate-btn:disabled{opacity:0.5;cursor:not-allowed}
+      
+      /* Distance tag */
+      .distance-tag{position:absolute;right:16px;top:auto;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--panel-border);color:#e8f6ff;font-weight:700;backdrop-filter:blur(8px);pointer-events:auto;max-width:420px;z-index:11}
+      .distance-tag small{display:block;font-weight:600;color:#a6c1d8}
+      
+      /* Promo/Dialog */
+      .promo{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:min(760px,92vw);max-width:92vw;padding:24px 28px;border-radius:16px;z-index:30;text-align:center;text-decoration:none;display:none;pointer-events:auto;color:#eaf2ff;font-weight:700;line-height:1.45;background:radial-gradient(140% 220% at 50% -20%, rgba(0,240,255,.18), rgba(0,0,0,.45) 40%),var(--panel);border:1px solid rgba(0,255,255,.28);box-shadow:0 0 0 1px rgba(0,255,255,.16) inset,0 24px 90px rgba(0,0,0,.55),0 0 48px rgba(0,225,255,.35)}
+      .promo small{display:block;color:#bfe6ff;font-weight:800;opacity:.95;margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
+      .promo em{font-style:normal;color:#ffe0a8}
+      .promo.show{display:block;animation:pop .35s ease-out, glow 3s ease-in-out infinite alternate}
+      .promo-backdrop{position:fixed;inset:0;display:none;z-index:20;background:radial-gradient(60% 60% at 50% 50%, rgba(0,224,255,.10), transparent 70%),rgba(6,12,26,.55);backdrop-filter:blur(2px)}
+      .promo-backdrop.show{display:block;animation:fade .25s ease-out}
+      .promo .promo-close{position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.25);background:linear-gradient(180deg, rgba(0,255,255,.16), rgba(0,0,0,.35));color:#eaf6ff;font-weight:900;cursor:pointer;box-shadow:inset 0 0 10px rgba(255,255,255,.08), 0 6px 16px rgba(0,0,0,.35)}
+      .promo .promo-close:hover{filter:brightness(1.1)}
+      .promo .promo-content{margin-top:16px}
+      .promo .promo-btn{display:inline-block;margin-top:16px;padding:12px 24px;border-radius:10px;background:linear-gradient(180deg,#f59e0b,#ea580c);color:white;font-weight:800;border:none;cursor:pointer}
+      .promo .promo-btn:hover{filter:brightness(1.1)}
+      
+      @keyframes pop{from{transform:translate(-50%,-50%) scale(.92);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+      @keyframes glow{from{box-shadow:0 0 0 1px rgba(0,255,255,.16) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 28px rgba(0,225,255,.25)}to{box-shadow:0 0 0 1px rgba(0,255,255,.25) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 64px rgba(0,225,255,.55)}}
+      @keyframes fade{from{opacity:0}to{opacity:1}}
+      
+      #globe-view footer{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--panel-border);color:var(--muted);background:linear-gradient(0deg,#0f1730,transparent);pointer-events:auto}
+      .credit{font-size:12px}
+      
+      /* Mobile toggles */
       .unit-toggle{display:none;position:absolute;left:50%;transform:translateX(-50%);top:8px;z-index:13;background:var(--panel);border:1px solid var(--panel-border);border-radius:999px;padding:6px 8px;gap:6px}
       .unit-toggle button{background:transparent;border:0;color:#eaf2ff;font-weight:800;padding:6px 10px;border-radius:999px;cursor:pointer}
       .unit-toggle button.active{background:rgba(255,255,255,.12)}
       .details-toggle{display:none;position:absolute;left:50%;transform:translateX(-50%);bottom:82px;z-index:13;background:var(--panel);border:1px solid var(--panel-border);border-radius:999px;padding:8px 12px;color:#eaf2ff;font-weight:800;cursor:pointer}
-      /* Promo banner */
-      .promo{
-        position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);
-        width:min(760px,92vw);max-width:92vw;padding:24px 28px;border-radius:16px;z-index:30;
-        text-align:center;text-decoration:none;display:none;pointer-events:auto;color:#eaf2ff;font-weight:700;line-height:1.45;
-        background:
-          radial-gradient(140% 220% at 50% -20%, rgba(0,240,255,.18), rgba(0,0,0,.45) 40%),
-          var(--panel);
-        border:1px solid rgba(0,255,255,.28);
-        box-shadow:
-          0 0 0 1px rgba(0,255,255,.16) inset,
-          0 24px 90px rgba(0,0,0,.55),
-          0 0 48px rgba(0,225,255,.35);
-      }
-      .promo small{display:block;color:#bfe6ff;font-weight:800;opacity:.95;margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
-      .promo em{font-style:normal;color:#ffe0a8}
-      .promo::after{
-        content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
-        background:
-          radial-gradient(60% 40% at 50% 0%, rgba(0,255,255,.22), transparent 60%),
-          repeating-linear-gradient(180deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px);
-        mix-blend-mode:screen;opacity:.35;
-      }
-      .promo .promo-close{
-        position:absolute;right:10px;top:10px;width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.25);
-        background:linear-gradient(180deg, rgba(0,255,255,.16), rgba(0,0,0,.35));color:#eaf6ff;font-weight:900;cursor:pointer;
-        box-shadow:inset 0 0 10px rgba(255,255,255,.08), 0 6px 16px rgba(0,0,0,.35);
-      }
-      .promo .promo-close:hover{filter:brightness(1.1)}
-      .promo.show{display:block;animation:pop .35s ease-out, glow 3s ease-in-out infinite alternate}
-      @keyframes pop { from{transform:translate(-50%,-50%) scale(.92);opacity:0} to{transform:translate(-50%,-50%) scale(1);opacity:1} }
-      @keyframes glow { from{box-shadow:0 0 0 1px rgba(0,255,255,.16) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 28px rgba(0,225,255,.25)} to{box-shadow:0 0 0 1px rgba(0,255,255,.25) inset, 0 24px 90px rgba(0,0,0,.55), 0 0 64px rgba(0,225,255,.55)} }
-
-      /* Modal backdrop for promo */
-      .promo-backdrop{
-        position:fixed;inset:0;display:none;z-index:20;
-        background:
-          radial-gradient(60% 60% at 50% 50%, rgba(0,224,255,.10), transparent 70%),
-          rgba(6,12,26,.55);
-        backdrop-filter: blur(2px);
-      }
-      .promo-backdrop.show{display:block;animation:fade .25s ease-out}
-      @keyframes fade { from{opacity:0} to{opacity:1} }
-      @keyframes pop { from{transform:translateY(6px);opacity:0} to{transform:none;opacity:1} }
-
-      /* Distance tag over the globe */
-      .distance-tag{
-        position:absolute;right:16px;top:auto;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--panel-border);
-        color:#e8f6ff;font-weight:700;backdrop-filter: blur(8px);pointer-events:auto;max-width:420px; z-index:11;
-      }
-      .distance-tag small{display:block;font-weight:600;color:#a6c1d8}
-
-      footer{
-        display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--panel-border);color:var(--muted);
-        background:linear-gradient(0deg,#0f1730,transparent);
-        pointer-events:auto;
-      }
-      .credit{font-size:12px}
-
-      /* CSS2D labels */
-      .label{
-        padding:4px 8px;border-radius:8px;background:rgba(7,14,28,.7);border:1px solid rgba(255,255,255,.2);color:#e8f4ff;font-weight:700;font-size:12px;
-        box-shadow:0 8px 20px rgba(0,0,0,.4)
-      }
-
-      /* Responsive tweaks */
-      @media (max-width: 980px) {
-        .panel{width:300px}
-        .distance-tag{max-width:320px}
-      }
-      @media (max-width: 820px) {
-        header{flex-wrap:wrap}
-        /* Compact progress card but keep dates visible */
-        .progress-card{
-          width:min(92vw,480px);
-          top:58px;
-          padding:8px 10px;
-        }
+      
+      @media (max-width: 980px){.panel{width:300px}.distance-tag{max-width:320px}}
+      @media (max-width: 820px){
+        #globe-view header{flex-wrap:wrap}
+        .progress-card{width:min(92vw,480px);top:58px;padding:8px 10px}
         .progress-card .worm{width:18px;height:18px}
         .progress-card .bar{height:8px}
         .progress-card .pct{width:46px;font-size:12px}
         .progress-card .dates{font-size:11px;margin-top:6px}
-        /* Mobile toggles visible */
         .unit-toggle{display:flex}
         .details-toggle{display:inline-block;bottom:18px}
-        /* Panels are collapsible: hidden by default, shown when body[data-panels="open"] */
         body:not([data-panels="open"]) .panel{display:none}
-        body[data-panels="open"] .panel{
-          display:block;
-          width:calc(100vw - 24px);
-          left:12px;right:12px;top:auto;bottom:110px;
-        }
-        /* Only one units panel visible when open */
+        body[data-panels="open"] .panel{display:block;width:calc(100vw - 24px);left:12px;right:12px;top:auto;bottom:110px}
         body[data-panels="open"][data-units="imperial"] .panel.right{display:none}
         body[data-panels="open"][data-units="metric"] .panel{display:none}
         body[data-panels="open"][data-units="metric"] .panel.right{display:block}
-        /* Distance tag: remove entirely on mobile */
         .distance-tag{display:none !important}
+      }
+      
+      /* ===== NAATAK PAGES STYLES ===== */
+      .naatak-page{background:linear-gradient(to bottom, var(--slate-950), var(--indigo-950), var(--slate-950));min-height:100vh}
+      .naatak-nav{border-bottom:1px solid rgba(99,102,241,0.2);backdrop-filter:blur(8px);background:rgba(2,6,23,0.5);position:sticky;top:0;z-index:50}
+      .naatak-nav-inner{max-width:80rem;margin:0 auto;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between}
+      .naatak-logo{display:flex;align-items:center;gap:0.75rem;cursor:pointer}
+      .naatak-logo-img{width:40px;height:40px;border-radius:8px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+      .naatak-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--indigo-500),var(--purple-600));border-radius:8px;display:flex;align-items:center;justify-content:center}
+      .naatak-logo-icon svg{width:20px;height:20px;color:white}
+      .naatak-logo-text{font-size:1.25rem;font-weight:700;background:linear-gradient(to right,var(--indigo-400),var(--purple-400));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+      .naatak-nav-links{display:flex;align-items:center;gap:1.5rem}
+      .naatak-nav-links a{color:var(--slate-300);transition:color 0.2s;cursor:pointer}
+      .naatak-nav-links a:hover{color:white}
+      .naatak-nav-links a.active{color:white;font-weight:500}
+      .naatak-btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border-radius:0.5rem;font-weight:600;border:none;cursor:pointer;transition:all 0.2s}
+      .naatak-btn-primary{background:linear-gradient(to right,var(--indigo-600),var(--purple-600));color:white}
+      .naatak-btn-primary:hover{filter:brightness(1.1)}
+      .naatak-btn-amber{background:linear-gradient(to right,var(--amber-500),var(--orange-600));color:white}
+      .naatak-btn-amber:hover{filter:brightness(1.1)}
+      .naatak-btn-outline{background:transparent;border:1px solid rgba(99,102,241,0.5);color:var(--indigo-300)}
+      .naatak-btn-outline:hover{background:rgba(99,102,241,0.1)}
+      .naatak-btn-lg{padding:0.75rem 2rem;font-size:1.125rem}
+      
+      /* Hero section */
+      .hero-section{position:relative;overflow:hidden;padding:6rem 1.5rem}
+      .hero-bg{position:absolute;inset:0;background:linear-gradient(to right,rgba(99,102,241,0.1),rgba(168,85,247,0.1))}
+      .hero-grid{position:absolute;inset:0;background-image:url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+");opacity:0.4}
+      .hero-content{position:relative;max-width:56rem;margin:0 auto;text-align:center}
+      .hero-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;border-radius:9999px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);margin-bottom:2rem}
+      .hero-badge svg{width:16px;height:16px;color:var(--indigo-400)}
+      .hero-badge span{font-size:0.875rem;color:var(--indigo-300)}
+      .hero-title{font-size:3rem;font-weight:700;margin-bottom:1.5rem;background:linear-gradient(to right,white,#c7d2fe,#e9d5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+      @media(min-width:768px){.hero-title{font-size:4.5rem}}
+      .hero-desc{font-size:1.25rem;color:var(--slate-300);margin-bottom:2.5rem;line-height:1.6;max-width:48rem;margin-left:auto;margin-right:auto}
+      .hero-buttons{display:flex;flex-direction:column;gap:1rem;align-items:center;justify-content:center}
+      @media(min-width:640px){.hero-buttons{flex-direction:row}}
+      
+      /* Cards */
+      .card{background:rgba(30,41,59,0.5);border:1px solid rgba(99,102,241,0.2);border-radius:0.75rem;padding:2rem;transition:all 0.2s}
+      .card:hover{border-color:rgba(99,102,241,0.4);box-shadow:0 10px 40px rgba(99,102,241,0.1)}
+      .card-icon{width:48px;height:48px;border-radius:0.75rem;background:linear-gradient(135deg,var(--indigo-500),var(--purple-600));display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
+      .card-icon svg{width:24px;height:24px;color:white}
+      .card-title{font-size:1.25rem;font-weight:700;color:white;margin-bottom:0.75rem}
+      .card-desc{color:var(--slate-400);line-height:1.6}
+      
+      /* Sections */
+      .section{padding:5rem 1.5rem}
+      .section-dark{background:rgba(15,23,42,0.5)}
+      .section-title{font-size:2.25rem;font-weight:700;color:white;margin-bottom:1rem;text-align:center}
+      .section-desc{color:var(--slate-400);max-width:42rem;margin:0 auto 4rem;text-align:center}
+      .grid-3{display:grid;gap:2rem}
+      @media(min-width:768px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+      .grid-2{display:grid;gap:2rem}
+      @media(min-width:768px){.grid-2{grid-template-columns:repeat(2,1fr)}}
+      .max-w-7xl{max-width:80rem;margin:0 auto}
+      .max-w-5xl{max-width:64rem;margin:0 auto}
+      
+      /* Footer */
+      .naatak-footer{border-top:1px solid rgba(99,102,241,0.2);background:rgba(2,6,23,0.5);padding:3rem 1.5rem}
+      .naatak-footer-inner{max-width:80rem;margin:0 auto}
+      .naatak-footer-top{display:flex;flex-direction:column;gap:1.5rem;align-items:center;justify-content:space-between}
+      @media(min-width:768px){.naatak-footer-top{flex-direction:row}}
+      .naatak-footer-links{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center}
+      .naatak-footer-links a{color:var(--slate-400);font-size:0.875rem;cursor:pointer}
+      .naatak-footer-links a:hover{color:white}
+      .naatak-footer-bottom{margin-top:2rem;padding-top:2rem;border-top:1px solid var(--slate-800);text-align:center}
+      .naatak-footer-bottom p{color:rgb(100,116,139);font-size:0.875rem}
+      
+      /* SVG Icons inline */
+      .icon{display:inline-block;vertical-align:middle}
+      
+      /* Visualization */
+      .viz-container{margin-top:5rem;position:relative;height:16rem;display:flex;align-items:center;justify-content:center}
+      
+      /* Key facts card */
+      .facts-card{background:rgba(15,23,42,0.5);border-radius:0.75rem;padding:1.5rem}
+      .facts-row{display:flex;justify-content:space-between;align-items:center;padding:1rem 0}
+      .facts-row:not(:last-child){border-bottom:1px solid var(--slate-700)}
+      .facts-label{color:var(--slate-400)}
+      .facts-value{font-size:1.5rem;font-weight:700}
+      .facts-value.indigo{color:var(--indigo-400)}
+      .facts-value.purple{color:var(--purple-400)}
+      .facts-value.green{color:#4ade80}
+      
+      /* Mobile nav */
+      @media(max-width:768px){
+        .naatak-nav-links{display:none}
+        .naatak-nav-links.mobile-open{display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:var(--slate-950);padding:1rem;border-bottom:1px solid rgba(99,102,241,0.2)}
       }
     </style>
   </head>
   <body>
-    <div class="chrome">
-      <header>
-        <img class="logo" src="gt-logo.jpg" alt="Gravity Train logo" />
-        <div class="brand">
-          <div class="title">Gravity Train</div>
-          <div class="subtitle">Earth Tunnel Project — Cupertino ⇄ New Delhi</div>
-        </div>
-      </header>
-      <main>
-        <div id="scene-wrap">
-          <div id="cesiumContainer" aria-label="Realistic Earth with tunnel arc"></div>
-        </div>
-
-        <!-- Mobile controls -->
-        <div class="unit-toggle" id="unitToggle" role="tablist" aria-label="Units (mobile)">
-          <button id="btnImperial" class="active" type="button" aria-selected="true">Imperial</button>
-          <button id="btnMetric" type="button" aria-selected="false">Metric</button>
-        </div>
-        <button id="detailsToggle" class="details-toggle" type="button" aria-expanded="false">Show details</button>
-
-        <!-- Imperial panel on the left (US) -->
-        <aside class="panel" aria-label="Digging Status (Imperial)">
-          <h3>Digging Status</h3>
-          <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speedImp"></span> ft³/s</div></div>
-          <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtimeImp"></span>%</div></div>
-          <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecsImp"></span> s</div></div>
-          <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDayImp"></span> ft³</div></div>
-          <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDayImp"></span> mi</div></div>
-          <div class="divider"></div>
-          <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelMi"></span> mi</div></div>
-          <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDaysImp"></span> days</div></div>
-          <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVolImp"></span> ft³</div></div>
-          <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCubeImp"></span></div></div>
-        </aside>
-
-        <!-- Centered progress card -->
-        <section id="progressCard" class="progress-card">
-          <div class="progress" aria-label="Worm Location">
-            <div class="worm" aria-hidden="true"></div>
-            <div class="bar"><div id="fill" class="fill"></div></div>
-            <div id="pct" class="pct">0%</div>
+    <!-- ===== GLOBE VIEW ===== -->
+    <div id="globe-view" class="view active">
+      <div class="chrome">
+        <header>
+          <div class="globe-header-left">
+            <img class="logo" src="gt-logo.jpg" alt="Gravity Train logo" />
+            <div class="brand">
+              <div class="title">Gravity Train</div>
+              <div class="subtitle">Earth Tunnel Project — Cupertino ⇄ New Delhi</div>
+            </div>
           </div>
-          <div class="dates">
-            <div>Worm Location: <strong id="wormText">0%</strong></div>
-            <div>Digging Started: <strong>Cupertino, Aug 5, 2012</strong></div>
-            <div>Digging Ends: <strong>New Delhi, Jan 21, 2024</strong></div>
+          <button class="globe-nav-link" onclick="navigateTo('home')">Show Experience →</button>
+        </header>
+        <main>
+          <div id="scene-wrap">
+            <div id="cesiumContainer" aria-label="Realistic Earth with tunnel arc"></div>
           </div>
-        </section>
-
-        <div class="distance-tag" id="distanceTag">
-          The Gravity Tunnel — <span id="distanceText">…</span>
-          <small>Through-Earth chord distance. Projected travel time at 1 g: 42 minutes.</small>
+          
+          <!-- Mobile controls -->
+          <div class="unit-toggle" id="unitToggle" role="tablist" aria-label="Units (mobile)">
+            <button id="btnImperial" class="active" type="button" aria-selected="true">Imperial</button>
+            <button id="btnMetric" type="button" aria-selected="false">Metric</button>
+          </div>
+          <button id="detailsToggle" class="details-toggle" type="button" aria-expanded="false">Show details</button>
+          
+          <!-- Imperial panel on the left (US) -->
+          <aside id="panelImperial" class="panel" aria-label="Digging Status (Imperial)">
+            <div class="panel-header" onclick="togglePanel('panelImperial')">
+              <h3>Digging Status</h3>
+              <button class="panel-toggle" type="button" aria-label="Toggle panel">▼</button>
+            </div>
+            <div class="panel-content">
+              <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speedImp"></span> ft³/s</div></div>
+              <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtimeImp"></span>%</div></div>
+              <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecsImp"></span> s</div></div>
+              <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDayImp"></span> ft³</div></div>
+              <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDayImp"></span> mi</div></div>
+              <div class="divider"></div>
+              <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelMi"></span> mi</div></div>
+              <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDaysImp"></span> days</div></div>
+              <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVolImp"></span> ft³</div></div>
+              <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCubeImp"></span></div></div>
+            </div>
+          </aside>
+          
+          <!-- Centered progress card -->
+          <section id="progressCard" class="progress-card">
+            <div class="progress" aria-label="Worm Location">
+              <div class="worm" aria-hidden="true"></div>
+              <div class="bar"><div id="fill" class="fill"></div></div>
+              <div id="pct" class="pct">0%</div>
+            </div>
+            <div class="dates">
+              <div>Worm Location: <strong id="wormText">0%</strong></div>
+              <div>Digging Started: <strong>Cupertino, Aug 5, 2012</strong></div>
+              <div>Digging Ends: <strong>New Delhi, Jan 21, 2024</strong></div>
+            </div>
+          </section>
+          
+          <!-- Simulate button -->
+          <button id="simulateBtn" class="simulate-btn" style="display:none">▶ Simulate Digging</button>
+          
+          <div class="distance-tag" id="distanceTag">
+            The Gravity Tunnel — <span id="distanceText">…</span>
+            <small>Through-Earth chord distance. Projected travel time at 1 g: 42 minutes.</small>
+          </div>
+          
+          <div id="promoBackdrop" class="promo-backdrop"></div>
+          <div id="promoBanner" class="promo">
+            <button class="promo-close" type="button" aria-label="Close">×</button>
+            <small>Experience Gravity Train</small>
+            <div class="promo-content">
+              Get an experience of the Gravity Train from <em>Jan 21</em> to <em>Feb 15</em> at <em>Startbright Theater</em>. Visit <em>naatak.org</em>.
+            </div>
+            <button class="promo-btn" id="enterSiteBtn">Enter Experience →</button>
+          </div>
+          
+          <!-- Metric panel on the right (India) -->
+          <aside id="panelMetric" class="panel right" aria-label="Digging Status (Metric)">
+            <div class="panel-header" onclick="togglePanel('panelMetric')">
+              <h3>Digging Status</h3>
+              <button class="panel-toggle" type="button" aria-label="Toggle panel">▼</button>
+            </div>
+            <div class="panel-content">
+              <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speed"></span> m³/s</div></div>
+              <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtime"></span>%</div></div>
+              <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecs"></span> s</div></div>
+              <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDay"></span> m³</div></div>
+              <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDay"></span> km</div></div>
+              <div class="divider"></div>
+              <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelKm"></span> km</div></div>
+              <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDays"></span> days</div></div>
+              <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVol"></span> m³</div></div>
+              <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCube"></span></div></div>
+            </div>
+          </aside>
+        </main>
+        <footer>
+          <div class="credit">© <span id="year"></span> Naatak — America's Largest Indian Theater</div>
+        </footer>
+      </div>
+    </div>
+    
+    <!-- ===== HOME VIEW ===== -->
+    <div id="home-view" class="view naatak-page">
+      <nav class="naatak-nav">
+        <div class="naatak-nav-inner">
+          <div class="naatak-logo" onclick="navigateTo('home')">
+            <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
+            <span class="naatak-logo-text">GravityTrain</span>
+          </div>
+          <div class="naatak-nav-links" id="navLinks">
+            <a onclick="navigateTo('globe', true)">Show Digging Progress</a>
+            <a onclick="navigateTo('simulation')">Simulation</a>
+            <a onclick="navigateTo('concepts')">Concepts</a>
+            <a onclick="navigateTo('history')">History</a>
+            <a onclick="navigateTo('about')">About</a>
+            <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
+              <button class="naatak-btn naatak-btn-amber">Book Tickets <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
+            </a>
+          </div>
         </div>
-        <div id="promoBackdrop" class="promo-backdrop"></div>
-        <a id="promoBanner" class="promo" href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener">
-          <button class="promo-close" type="button" aria-label="Close">×</button>
-          <small>Experience Gravity Train</small>
-          Get an experience of the Gravity Train from <em>Jan 21</em> to <em>Feb 15</em> at <em>Startbright Theater</em>. Visit <em>naatak.org</em>.
-        </a>
-
-        <!-- Metric panel on the right (India) -->
-        <aside class="panel right" aria-label="Digging Status (Metric)">
-          <h3>Digging Status</h3>
-          <div class="kv"><div class="k">Digging Speed</div><div class="v"><span id="speed"></span> m³/s</div></div>
-          <div class="kv"><div class="k">Downtime</div><div class="v"><span id="downtime"></span>%</div></div>
-          <div class="kv"><div class="k">Digging Time / Day</div><div class="v"><span id="digSecs"></span> s</div></div>
-          <div class="kv"><div class="k">Volume / Day</div><div class="v"><span id="volDay"></span> m³</div></div>
-          <div class="kv"><div class="k">Advance / Day</div><div class="v"><span id="advanceDay"></span> km</div></div>
-          <div class="divider"></div>
-          <div class="kv"><div class="k">Total Tunnel Length</div><div class="v"><span id="tunnelKm"></span> km</div></div>
-          <div class="kv"><div class="k">Total Digging Days</div><div class="v"><span id="totalDays"></span> days</div></div>
-          <div class="kv"><div class="k">Total Volume</div><div class="v"><span id="totalVol"></span> m³</div></div>
-          <div class="kv"><div class="k">Dirt Cube</div><div class="v"><span id="dirtCube"></span></div></div>
-        </aside>
-      </main>
-      <footer>
-        <div class="credit">© <span id="year"></span> Naatak — America's Largest Indian Theater</div>
+      </nav>
+      
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="hero-grid"></div>
+        <div class="hero-content">
+          <div class="hero-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Revolutionary Transportation Concept</span>
+          </div>
+          <h1 class="hero-title">Travel Anywhere on Earth in 42 Minutes</h1>
+          <p class="hero-desc">Discover the physics-defying potential of gravity trains—a theoretical transportation system that uses Earth's gravity to accelerate through tunnels, reaching any destination in the same time.</p>
+          <div class="hero-buttons">
+            <button class="naatak-btn naatak-btn-primary naatak-btn-lg" onclick="navigateTo('simulation')">Try the Simulation <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+            <button class="naatak-btn naatak-btn-outline naatak-btn-lg" onclick="navigateTo('concepts')"><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Learn the Physics</button>
+          </div>
+        </div>
+        
+        <!-- Visualization -->
+        <div class="viz-container">
+          <svg width="800" height="200" viewBox="0 0 800 200" style="max-width:100%">
+            <circle cx="400" cy="100" r="80" fill="url(#earthGradient)" opacity="0.3" />
+            <defs>
+              <linearGradient id="earthGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#4f46e5" />
+                <stop offset="100%" stop-color="#9333ea" />
+              </linearGradient>
+              <linearGradient id="tunnelGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#6366f1" />
+                <stop offset="50%" stop-color="#8b5cf6" />
+                <stop offset="100%" stop-color="#6366f1" />
+              </linearGradient>
+            </defs>
+            <path d="M 150 100 Q 400 180 650 100" stroke="url(#tunnelGradient)" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
+            <g style="animation:pulse 2s infinite">
+              <circle cx="400" cy="140" r="8" fill="#a78bfa" />
+              <circle cx="400" cy="140" r="12" fill="#a78bfa" opacity="0.3" />
+            </g>
+            <circle cx="150" cy="100" r="6" fill="#60a5fa" />
+            <circle cx="650" cy="100" r="6" fill="#60a5fa" />
+            <text x="150" y="85" fill="#94a3b8" font-size="12" text-anchor="middle">Start</text>
+            <text x="650" y="85" fill="#94a3b8" font-size="12" text-anchor="middle">End</text>
+          </svg>
+        </div>
+      </section>
+      
+      <!-- Concept Section -->
+      <section class="section section-dark">
+        <div class="max-w-7xl">
+          <h2 class="section-title">The Concept</h2>
+          <p class="section-desc">A gravity train is a theoretical means of transportation that uses gravity to accelerate through a straight tunnel between any two points on Earth.</p>
+          <div class="grid-3">
+            <div class="card">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <h3 class="card-title">Straight Path</h3>
+              <p class="card-desc">The train travels through a straight tunnel drilled through the Earth, not following the curved surface.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5,4.21 12,6.81 16.5,4.21"/><polyline points="7.5,19.79 7.5,14.6 3,12"/><polyline points="21,12 16.5,14.6 16.5,19.79"/><polyline points="3.27,6.96 12,12.01 20.73,6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+              </div>
+              <h3 class="card-title">Gravity Acceleration</h3>
+              <p class="card-desc">Gravity accelerates the train as it falls toward the center, reaching incredible speeds at the midpoint.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <h3 class="card-title">42 Minutes</h3>
+              <p class="card-desc">Remarkably, the journey takes approximately 42 minutes regardless of the distance between endpoints.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Physics Section -->
+      <section class="section">
+        <div class="max-w-7xl">
+          <div class="grid-2" style="align-items:center">
+            <div>
+              <h2 style="font-size:2.25rem;font-weight:700;color:white;margin-bottom:1.5rem">The Physics Behind It</h2>
+              <div style="display:flex;flex-direction:column;gap:1.5rem">
+                <div>
+                  <h3 style="font-size:1.25rem;font-weight:600;color:var(--indigo-300);margin-bottom:0.5rem">Simple Harmonic Motion</h3>
+                  <p style="color:var(--slate-400);line-height:1.6">The gravity train follows the principles of simple harmonic motion, where the restoring force is proportional to the displacement from equilibrium.</p>
+                </div>
+                <div>
+                  <h3 style="font-size:1.25rem;font-weight:600;color:var(--indigo-300);margin-bottom:0.5rem">Constant Travel Time</h3>
+                  <p style="color:var(--slate-400);line-height:1.6">Due to the mathematics of gravity and harmonic motion, all gravity train routes take the same time—approximately 42 minutes and 12 seconds.</p>
+                </div>
+                <div>
+                  <h3 style="font-size:1.25rem;font-weight:600;color:var(--indigo-300);margin-bottom:0.5rem">Zero Energy Required</h3>
+                  <p style="color:var(--slate-400);line-height:1.6">In an ideal frictionless vacuum tunnel, the train would require no energy beyond the initial release, making it perfectly efficient.</p>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="facts-card">
+                <h4 style="font-size:1.125rem;font-weight:600;color:white;margin-bottom:1rem">Key Facts</h4>
+                <div class="facts-row">
+                  <span class="facts-label">Transit Time</span>
+                  <span class="facts-value indigo">42:12</span>
+                </div>
+                <div class="facts-row">
+                  <span class="facts-label">Max Speed (at center)</span>
+                  <span class="facts-value purple">~8 km/s</span>
+                </div>
+                <div class="facts-row">
+                  <span class="facts-label">Energy Cost</span>
+                  <span class="facts-value green">Zero*</span>
+                </div>
+                <p style="font-size:0.75rem;color:rgb(100,116,139);margin-top:1rem">*In ideal conditions (vacuum, no friction)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Benefits Section -->
+      <section class="section section-dark">
+        <div class="max-w-7xl">
+          <h2 class="section-title">Theoretical Benefits</h2>
+          <p class="section-desc">While currently theoretical, gravity trains present fascinating possibilities for future transportation.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem">
+            <div class="card" style="text-align:center">
+              <div style="font-size:2.5rem;margin-bottom:1rem">⚡</div>
+              <h3 style="font-size:1.125rem;font-weight:600;color:white;margin-bottom:0.5rem">Ultra-Fast</h3>
+              <p style="font-size:0.875rem;color:var(--slate-400)">Reach any point on Earth in under an hour</p>
+            </div>
+            <div class="card" style="text-align:center">
+              <div style="font-size:2.5rem;margin-bottom:1rem">🌱</div>
+              <h3 style="font-size:1.125rem;font-weight:600;color:white;margin-bottom:0.5rem">Energy Efficient</h3>
+              <p style="font-size:0.875rem;color:var(--slate-400)">Minimal energy required in ideal conditions</p>
+            </div>
+            <div class="card" style="text-align:center">
+              <div style="font-size:2.5rem;margin-bottom:1rem">⏱️</div>
+              <h3 style="font-size:1.125rem;font-weight:600;color:white;margin-bottom:0.5rem">Predictable</h3>
+              <p style="font-size:0.875rem;color:var(--slate-400)">Consistent travel time regardless of distance</p>
+            </div>
+            <div class="card" style="text-align:center">
+              <div style="font-size:2.5rem;margin-bottom:1rem">📍</div>
+              <h3 style="font-size:1.125rem;font-weight:600;color:white;margin-bottom:0.5rem">Direct Routes</h3>
+              <p style="font-size:0.875rem;color:var(--slate-400)">Straight-line paths between destinations</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- CTA Section -->
+      <section class="section">
+        <div class="max-w-5xl" style="text-align:center">
+          <h2 style="font-size:2.25rem;font-weight:700;color:white;margin-bottom:1rem">Experience "Hole"</h2>
+          <p style="color:var(--slate-300);margin-bottom:2rem;font-size:1.125rem">This interactive experience is part of Naatak's upcoming theatrical production exploring gravity trains and the human stories that unfold when science fiction meets reality.</p>
+          <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
+            <button class="naatak-btn naatak-btn-amber naatak-btn-lg">Book Your Gravity Train Tickets <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></button>
+          </a>
+        </div>
+      </section>
+      
+      <!-- Footer -->
+      <footer class="naatak-footer">
+        <div class="naatak-footer-inner">
+          <div class="naatak-footer-top">
+            <div class="naatak-logo" onclick="navigateTo('home')">
+              <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
+              <span class="naatak-logo-text">GravityTrain</span>
+            </div>
+            <div class="naatak-footer-links">
+              <a onclick="navigateTo('globe', true)">Digging Progress</a>
+              <a onclick="navigateTo('simulation')">Simulation</a>
+              <a onclick="navigateTo('concepts')">Concepts</a>
+              <a onclick="navigateTo('history')">History</a>
+              <a onclick="navigateTo('about')">About</a>
+              <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank">Naatak</a>
+            </div>
+          </div>
+          <div class="naatak-footer-bottom">
+            <p>An interactive lobby experience for "Hole" — A Naatak Production © 2026</p>
+          </div>
+        </div>
       </footer>
     </div>
+    
+    <!-- ===== SIMULATION VIEW ===== -->
+    <div id="simulation-view" class="view naatak-page"></div>
+    
+    <!-- ===== CONCEPTS VIEW ===== -->
+    <div id="concepts-view" class="view naatak-page"></div>
+    
+    <!-- ===== HISTORY VIEW ===== -->
+    <div id="history-view" class="view naatak-page"></div>
+    
+    <!-- ===== ABOUT VIEW ===== -->
+    <div id="about-view" class="view naatak-page"></div>
 
     <!-- CesiumJS (globe engine) -->
     <link rel="stylesheet" href="https://unpkg.com/cesium@1.119/Build/Cesium/Widgets/widgets.css" />
     <script src="https://unpkg.com/cesium@1.119/Build/Cesium/Cesium.js"></script>
+    
     <script>
-
-      // ---------- Utility formatting ----------
+      // ===== GLOBAL STATE =====
+      let currentView = 'globe';
+      let isStaticProgress = false;
+      let simulationRan = false;
+      let viewer = null;
+      let progressFraction = 0;
+      let chordPositions = [];
+      
+      // ===== VIEW NAVIGATION =====
+      function navigateTo(view, staticMode = false) {
+        // Hide all views
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        
+        // Show target view
+        const targetView = document.getElementById(view + '-view');
+        if (targetView) {
+          targetView.classList.add('active');
+          currentView = view;
+          
+          if (view === 'globe') {
+            isStaticProgress = staticMode;
+            if (staticMode) {
+              // Show static progress at random point
+              const randomProgress = 0.3 + Math.random() * 0.6; // 30-90%
+              setProgress(randomProgress);
+              document.getElementById('simulateBtn').style.display = 'block';
+              hidePromo();
+            }
+          } else if (view === 'simulation' && !document.getElementById('simulation-view').innerHTML) {
+            loadSimulationView();
+          } else if (view === 'concepts' && !document.getElementById('concepts-view').innerHTML) {
+            loadConceptsView();
+          } else if (view === 'history' && !document.getElementById('history-view').innerHTML) {
+            loadHistoryView();
+          } else if (view === 'about' && !document.getElementById('about-view').innerHTML) {
+            loadAboutView();
+          }
+          
+          window.scrollTo(0, 0);
+        }
+      }
+      
+      // ===== UTILITY FORMATTING =====
       const fmt = new Intl.NumberFormat('en-US');
       const km = v => fmt.format((v).toFixed(0));
       const km2 = v => fmt.format((v).toFixed(2));
       const num0 = v => fmt.format(Math.round(v));
       const num2 = v => fmt.format(parseFloat(v.toFixed(2)));
-
-      // ---------- Scenario constants ----------
+      
+      // ===== SCENARIO CONSTANTS =====
       const EARTH_RADIUS_KM = 6371.0088;
       const START = new Date('2012-08-05T00:00:00Z');
-      const END   = new Date('2024-01-21T00:00:00Z');
-
-      // Cities
+      const END = new Date('2024-01-21T00:00:00Z');
       const CUPERTINO = { name:'Cupertino', lat:37.3318, lon:-122.0312 };
       const NEW_DELHI = { name:'New Delhi', lat:28.6139, lon:77.2090 };
-
-      // Tunnel geometry assumptions (for derived metrics)
-      const TUNNEL_RADIUS_M = 3; // 6 m diameter
-      const SECTION_AREA_M2 = Math.PI * TUNNEL_RADIUS_M * TUNNEL_RADIUS_M; // 28.27 m^2
-      const DIG_SECONDS_PER_DAY = 6 * 60 * 60; // 21,600 s (6 hours)
-      const DOWNTIME_PCT = 75; // remaining time is downtime
-      const SPEED_M3_S = 3.42; // m^3 per second
-      const VOLUME_PER_DAY_M3 = SPEED_M3_S * DIG_SECONDS_PER_DAY; // 73,872 m^3/day
-
-      // ---------- Distance calculations ----------
-      function toRad(d){ return d * Math.PI / 180; }
-      function centralAngle(lat1, lon1, lat2, lon2){
+      const TUNNEL_RADIUS_M = 3;
+      const SECTION_AREA_M2 = Math.PI * TUNNEL_RADIUS_M * TUNNEL_RADIUS_M;
+      const DIG_SECONDS_PER_DAY = 6 * 60 * 60;
+      const DOWNTIME_PCT = 75;
+      const SPEED_M3_S = 3.42;
+      const VOLUME_PER_DAY_M3 = SPEED_M3_S * DIG_SECONDS_PER_DAY;
+      
+      // ===== DISTANCE CALCULATIONS =====
+      function toRad(d) { return d * Math.PI / 180; }
+      function centralAngle(lat1, lon1, lat2, lon2) {
         const dLat = toRad(lat2-lat1);
         const dLon = toRad(lon2-lon1);
         const rlat1 = toRad(lat1);
@@ -316,333 +631,161 @@
         const a = Math.sin(dLat/2)**2 + Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(dLon/2)**2;
         return 2 * Math.asin(Math.min(1, Math.sqrt(a)));
       }
+      
       const theta = centralAngle(CUPERTINO.lat, CUPERTINO.lon, NEW_DELHI.lat, NEW_DELHI.lon);
       const surfaceKm = EARTH_RADIUS_KM * theta;
-      const chordKm   = 2 * EARTH_RADIUS_KM * Math.sin(theta/2);
-
-      // Derived tunneling metrics
+      const chordKm = 2 * EARTH_RADIUS_KM * Math.sin(theta/2);
       const totalLengthM = chordKm * 1000;
       const totalVolumeM3 = SECTION_AREA_M2 * totalLengthM;
-      const advancePerDayKm = (VOLUME_PER_DAY_M3 / SECTION_AREA_M2) / 1000; // ≈2.61 km/day
-      const totalDays = totalLengthM / (advancePerDayKm * 1000); // length_m / (km/day -> m/day)
-
-      // ---------- Populate status UI ----------
-      document.getElementById('speed').textContent = num2(SPEED_M3_S);
-      document.getElementById('downtime').textContent = DOWNTIME_PCT;
-      document.getElementById('digSecs').textContent = num0(DIG_SECONDS_PER_DAY);
-      document.getElementById('volDay').textContent = num0(VOLUME_PER_DAY_M3);
-      document.getElementById('advanceDay').textContent = km2(advancePerDayKm);
-      document.getElementById('tunnelKm').textContent = km(chordKm);
-      document.getElementById('totalDays').textContent = num0(totalDays);
-      document.getElementById('totalVol').textContent = fmt.format(Math.round(totalVolumeM3));
-      // Dirt cube (side^3 = volume) -> side in meters
-      const dirtCubeSide = Math.cbrt(totalVolumeM3);
-      const sideRounded = Math.round(dirtCubeSide/1) * 1;
-      document.getElementById('dirtCube').textContent = `${sideRounded} m × ${sideRounded} m × ${sideRounded} m`;
-      document.getElementById('distanceText').textContent = `${km(chordKm)} km (through Earth) · ${km(surfaceKm)} km by surface`;
-      document.getElementById('year').textContent = new Date().getFullYear();
-      // Imperial conversions
-      const M_TO_FT = 3.280839895;
-      const KM_TO_MI = 0.621371192;
-      const M3_TO_FT3 = 35.3146667;
-      const speedFt3s = SPEED_M3_S * M3_TO_FT3;
-      const volDayFt3 = VOLUME_PER_DAY_M3 * M3_TO_FT3;
-      const advanceDayMi = advancePerDayKm * KM_TO_MI;
-      const tunnelMiVal = chordKm * KM_TO_MI;
-      const totalVolFt3 = totalVolumeM3 * M3_TO_FT3;
-      const dirtCubeSideFt = dirtCubeSide * M_TO_FT;
-      document.getElementById('speedImp').textContent = num2(speedFt3s);
-      document.getElementById('downtimeImp').textContent = DOWNTIME_PCT;
-      document.getElementById('digSecsImp').textContent = num0(DIG_SECONDS_PER_DAY);
-      document.getElementById('volDayImp').textContent = num0(volDayFt3);
-      document.getElementById('advanceDayImp').textContent = km2(advanceDayMi);
-      document.getElementById('tunnelMi').textContent = km(tunnelMiVal);
-      document.getElementById('totalDaysImp').textContent = num0(totalDays);
-      document.getElementById('totalVolImp').textContent = fmt.format(Math.round(totalVolFt3));
-      const sideFtRounded = Math.round(dirtCubeSideFt);
-      document.getElementById('dirtCubeImp').textContent = `${sideFtRounded} ft × ${sideFtRounded} ft × ${sideFtRounded} ft`;
-
-      // Progress (interactive + simulated)
-      const DEFAULT_PROGRESS = 0.99; // default 10%
-      let progressFraction = DEFAULT_PROGRESS;
-      function progress01(){ return progressFraction; }
-      function dateForProgress(p){ return new Date(START.getTime() + p * (END - START)); }
-      function setProgress(p){
+      const advancePerDayKm = (VOLUME_PER_DAY_M3 / SECTION_AREA_M2) / 1000;
+      const totalDays = totalLengthM / (advancePerDayKm * 1000);
+      
+      // ===== PROGRESS FUNCTIONS =====
+      const DEFAULT_PROGRESS = 0.99;
+      
+      function progress01() { return progressFraction; }
+      
+      function dateForProgress(p) { return new Date(START.getTime() + p * (END - START)); }
+      
+      function setProgress(p) {
         progressFraction = Math.max(0, Math.min(1, p));
         const pct = Math.round(progressFraction*100);
         document.getElementById('pct').textContent = `${pct}%`;
         const dt = dateForProgress(progressFraction).toLocaleString();
         document.getElementById('wormText').textContent = `${pct}% [${dt}]`;
         document.getElementById('fill').style.width = `${pct}%`;
-        // Update progressed overlay (drawn atop the bright blue base)
-        try {
-          if (typeof updateProgressOverlay === 'function') {
-            updateProgressOverlay(progressFraction);
-          }
-        } catch(_) {}
       }
-      setProgress(progress01());
-      // Auto-run simulation once on load
-      (function autoSimulate(){
+      
+      function runSimulation(showPromoOnComplete = true) {
         let raf = null;
-        // Restart from 0
         setProgress(0);
-        const durationMs = 12000; // 12s from 0 → 100%
-        const start = performance.now();
-        function step(ts){
-          const t = Math.min(1, (ts - start) / durationMs);
+        const durationMs = 12000;
+        const startTime = performance.now();
+        document.getElementById('simulateBtn').disabled = true;
+        
+        function step(ts) {
+          const t = Math.min(1, (ts - startTime) / durationMs);
           setProgress(t);
-          if(t < 1){
+          if (t < 1) {
             raf = requestAnimationFrame(step);
-          }else{
-            const promo = document.getElementById('promoBanner');
-            const backdrop = document.getElementById('promoBackdrop');
-            if(promo){ promo.classList.add('show'); }
-            if(backdrop){ backdrop.classList.add('show'); }
-          }
-        }
-        raf && cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(step);
-      })();
-      // Banner close handlers and reset progress
-      (function wirePromoClose(){
-        const promo = document.getElementById('promoBanner');
-        const backdrop = document.getElementById('promoBackdrop');
-        const closeBtn = promo ? promo.querySelector('.promo-close') : null;
-        function hidePromoAndReset(){
-          if(promo) promo.classList.remove('show');
-          if(backdrop) backdrop.classList.remove('show');
-          setProgress(DEFAULT_PROGRESS);
-        }
-        if(closeBtn){
-          closeBtn.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); hidePromoAndReset(); });
-        }
-        if(backdrop){
-          backdrop.addEventListener('click', hidePromoAndReset);
-        }
-        document.addEventListener('keydown', (e)=>{
-          if(e.key === 'Escape' || e.key === 'Esc'){
-            if(promo && promo.classList.contains('show')){
-              hidePromoAndReset();
+          } else {
+            document.getElementById('simulateBtn').disabled = false;
+            simulationRan = true;
+            if (showPromoOnComplete && !isStaticProgress) {
+              showPromo();
             }
           }
-        });
-      })();
-
-      // ---------- CesiumJS globe ----------
-      // Point Cesium to its asset/worker base on the CDN
-      window.CESIUM_BASE_URL = 'https://unpkg.com/cesium@1.119/Build/Cesium/';
-      // Paste your token below. Leave empty to use the fallback OSM/ellipsoid setup.
-      const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYWY0MmJkMy01ODFhLTQ0ZWEtYWYyYS03ZmMyMTdiZmYxMGMiLCJpZCI6MzcxNTU0LCJpYXQiOjE3NjYzMDc2NDN9.SdxF3dwacj4mTMhMQWUAekzCBNNSacNiJWDO6B9evYk'; // <-- PASTE YOUR CESIUM ION TOKEN HERE
-      if (ION_TOKEN) {
-        Cesium.Ion.defaultAccessToken = ION_TOKEN;
+        }
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(step);
       }
-
-      const viewer = new Cesium.Viewer('cesiumContainer', {
-        animation: false,
-        timeline: false,
-        baseLayerPicker: false,
-        geocoder: false,
-        homeButton: false,
-        sceneModePicker: false,
-        navigationHelpButton: false,
-        infoBox: false
-      });
-      // Choose data sources depending on whether a token is available
-      if (ION_TOKEN) {
-        (async () => {
-          try {
-            const terrain = await Cesium.createWorldTerrainAsync();
-            viewer.terrainProvider = terrain;
-          } catch (e) {
-            console.warn('WorldTerrain load failed; continuing without terrain.', e);
-          }
-          try {
-            const worldImagery = await Cesium.IonImageryProvider.fromAssetId(2);
-            viewer.imageryLayers.removeAll();
-            viewer.imageryLayers.addImageryProvider(worldImagery);
-            tuneImagery();
-          } catch (e) {
-            console.warn('Ion imagery load failed; falling back to OSM.', e);
-            viewer.imageryLayers.removeAll();
-            viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
-              url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              credit: '© OpenStreetMap contributors'
-            }));
-            tuneImagery();
-          }
-        })();
-      } else {
-        // Fallback: OSM + ellipsoid terrain (no token needed)
-        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-        viewer.imageryLayers.removeAll();
-        viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
-          url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          credit: '© OpenStreetMap contributors'
-        }));
-        tuneImagery();
+      
+      function showPromo() {
+        document.getElementById('promoBanner').classList.add('show');
+        document.getElementById('promoBackdrop').classList.add('show');
       }
-      // Scene brightness and tonemapping
-      viewer.scene.highDynamicRange = false; // LDR tends to look brighter on standard displays
-      viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#1b3c7a');
-      viewer.scene.globe.enableLighting = true;
-      viewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere();
-      viewer.scene.globe.showGroundAtmosphere = true;
-      // Make the globe translucent so interior tunnel and marker are visible
-      viewer.scene.globe.translucency.enabled = true;
-      viewer.scene.globe.translucency.frontFaceAlpha = 0.35;
-      viewer.scene.globe.translucency.backFaceAlpha = 0.08;
-      if (viewer.scene.skyAtmosphere.brightnessShift !== undefined){
-        viewer.scene.skyAtmosphere.brightnessShift = 0.4;
-        viewer.scene.skyAtmosphere.hueShift = 0.02;
-        viewer.scene.skyAtmosphere.saturationShift = 0.15;
+      
+      function hidePromo() {
+        document.getElementById('promoBanner').classList.remove('show');
+        document.getElementById('promoBackdrop').classList.remove('show');
       }
-
-      // Add a brighter directional light
-      try {
-        viewer.scene.light = new Cesium.DirectionalLight({
-          direction: new Cesium.Cartesian3(1.0, 0.6, 0.3),
-          intensity: 2.2
-        });
-      } catch(_) { /* older Cesium versions may ignore intensity */ }
-
-      // Apply brighter color grading to imagery layers
-      function tuneImagery(){
-        const layers = viewer.imageryLayers;
-        for(let i=0;i<layers.length;i++){
-          const layer = layers.get(i);
-          layer.brightness = 1.45;
-          layer.contrast = 1.20;
-          layer.gamma = 0.88;
-          layer.saturation = 1.25;
+      
+      // ===== PANEL COLLAPSE TOGGLE =====
+      function togglePanel(panelId) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+          panel.classList.toggle('collapsed');
         }
       }
-      tuneImagery();
-
-      // Position the distance tag under the right panel
-      function positionDistanceTag(){
-        const rightPanel = document.querySelector('.panel.right');
-        const tag = document.getElementById('distanceTag');
-        const mainEl = document.querySelector('main');
-        if(!rightPanel || !tag || !mainEl) return;
-        const r = rightPanel.getBoundingClientRect();
-        const m = mainEl.getBoundingClientRect();
-        const top = (r.bottom - m.top) + 12; // 12px gap under panel
-        tag.style.top = `${Math.max(96, top)}px`;
-        tag.style.right = '16px';
+      
+      // ===== INITIALIZE UI =====
+      function initUI() {
+        // Populate stats
+        document.getElementById('speed').textContent = num2(SPEED_M3_S);
+        document.getElementById('downtime').textContent = DOWNTIME_PCT;
+        document.getElementById('digSecs').textContent = num0(DIG_SECONDS_PER_DAY);
+        document.getElementById('volDay').textContent = num0(VOLUME_PER_DAY_M3);
+        document.getElementById('advanceDay').textContent = km2(advancePerDayKm);
+        document.getElementById('tunnelKm').textContent = km(chordKm);
+        document.getElementById('totalDays').textContent = num0(totalDays);
+        document.getElementById('totalVol').textContent = fmt.format(Math.round(totalVolumeM3));
+        
+        const dirtCubeSide = Math.cbrt(totalVolumeM3);
+        const sideRounded = Math.round(dirtCubeSide);
+        document.getElementById('dirtCube').textContent = `${sideRounded} m × ${sideRounded} m × ${sideRounded} m`;
+        document.getElementById('distanceText').textContent = `${km(chordKm)} km (through Earth) · ${km(surfaceKm)} km by surface`;
+        document.getElementById('year').textContent = new Date().getFullYear();
+        
+        // Imperial conversions
+        const M_TO_FT = 3.280839895;
+        const KM_TO_MI = 0.621371192;
+        const M3_TO_FT3 = 35.3146667;
+        const speedFt3s = SPEED_M3_S * M3_TO_FT3;
+        const volDayFt3 = VOLUME_PER_DAY_M3 * M3_TO_FT3;
+        const advanceDayMi = advancePerDayKm * KM_TO_MI;
+        const tunnelMiVal = chordKm * KM_TO_MI;
+        const totalVolFt3 = totalVolumeM3 * M3_TO_FT3;
+        const dirtCubeSideFt = dirtCubeSide * M_TO_FT;
+        
+        document.getElementById('speedImp').textContent = num2(speedFt3s);
+        document.getElementById('downtimeImp').textContent = DOWNTIME_PCT;
+        document.getElementById('digSecsImp').textContent = num0(DIG_SECONDS_PER_DAY);
+        document.getElementById('volDayImp').textContent = num0(volDayFt3);
+        document.getElementById('advanceDayImp').textContent = km2(advanceDayMi);
+        document.getElementById('tunnelMi').textContent = km(tunnelMiVal);
+        document.getElementById('totalDaysImp').textContent = num0(totalDays);
+        document.getElementById('totalVolImp').textContent = fmt.format(Math.round(totalVolFt3));
+        const sideFtRounded = Math.round(dirtCubeSideFt);
+        document.getElementById('dirtCubeImp').textContent = `${sideFtRounded} ft × ${sideFtRounded} ft × ${sideFtRounded} ft`;
+        
+        setProgress(0);
       }
-      window.addEventListener('resize', positionDistanceTag);
-      // Defer to next frame so layout is settled
-      requestAnimationFrame(positionDistanceTag);
-
-      // Labels for cities
-      function labelAt(lon, lat, text){
-        return viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
-          label: {
-            text,
-            font: '700 14px Montserrat, sans-serif',
-            fillColor: Cesium.Color.WHITE,
-            showBackground: true,
-            backgroundColor: Cesium.Color.fromAlpha(Cesium.Color.BLACK, 0.6),
-            pixelOffset: new Cesium.Cartesian2(0, -16)
+      
+      // ===== EVENT HANDLERS =====
+      function wireEvents() {
+        // Promo close
+        document.querySelector('.promo-close').addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          hidePromo();
+          setProgress(DEFAULT_PROGRESS);
+        });
+        
+        document.getElementById('promoBackdrop').addEventListener('click', () => {
+          hidePromo();
+          setProgress(DEFAULT_PROGRESS);
+        });
+        
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && document.getElementById('promoBanner').classList.contains('show')) {
+            hidePromo();
+            setProgress(DEFAULT_PROGRESS);
           }
         });
-      }
-      labelAt(CUPERTINO.lon, CUPERTINO.lat, 'Cupertino');
-      labelAt(NEW_DELHI.lon, NEW_DELHI.lat, 'New Delhi');
-
-      // Build straight interior chord through the Earth between the two cities
-      function buildChord(lon1, lat1, lon2, lat2, steps=180){
-        const start = Cesium.Cartesian3.fromDegrees(lon1, lat1, 0);
-        const end   = Cesium.Cartesian3.fromDegrees(lon2, lat2, 0);
-        const pts = new Array(steps+1);
-        for(let i=0;i<=steps;i++){
-          const t = i/steps;
-          const p = Cesium.Cartesian3.lerp(start, end, t, new Cesium.Cartesian3());
-          pts[i] = p;
-        }
-        return pts;
-      }
-      const chordPositions = buildChord(CUPERTINO.lon, CUPERTINO.lat, NEW_DELHI.lon, NEW_DELHI.lat, 240);
-      
-      // Base tunnel: Yellow at 80% opacity (remaining portion)
-      const YELLOW_TUNNEL = Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.8);
-      // Progress overlay: Red at 80% opacity (completed portion)
-      const RED_PROGRESS = Cesium.Color.fromCssColorString('#DC143C').withAlpha(0.8);
-      
-      const chordEntity = viewer.entities.add({
-        name: 'The Gravity Tunnel (interior chord)',
-        polyline: {
-          positions: chordPositions,
-          width: 12,
-          material: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL),
-          depthFailMaterial: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL)
-        }
-      });
-      
-      // Progress overlay polyline (red, grows as progress increases)
-      const progressEntity = viewer.entities.add({
-        name: 'Tunnel Progress Overlay',
-        polyline: {
-          positions: new Cesium.CallbackProperty(function(){
-            const idx = Math.max(1, Math.floor(progressFraction * (chordPositions.length - 1)));
-            return chordPositions.slice(0, idx + 1);
-          }, false),
-          width: 12,
-          material: new Cesium.ColorMaterialProperty(RED_PROGRESS),
-          depthFailMaterial: new Cesium.ColorMaterialProperty(RED_PROGRESS)
-        }
-      });
-
-      // Moving worm along chord using a callback position
-      const worm = viewer.entities.add({
-        position: new Cesium.CallbackProperty(function(){
-          const p = progress01();
-          const idx = Math.max(0, Math.min(chordPositions.length-1, Math.floor(p * (chordPositions.length-1))));
-          return chordPositions[idx];
-        }, false),
-        point: {
-          pixelSize: 16,
-          color: Cesium.Color.fromCssColorString('#ffb347'),
-          outlineWidth: 2,
-          outlineColor: Cesium.Color.WHITE,
-          // Ensure the marker remains visible even when inside the Earth
-          disableDepthTestDistance: Number.POSITIVE_INFINITY
-        }
-      });
-
-      // Fit camera with north-up so Cupertino (west) appears on the left and New Delhi (east) on the right
-      (function setInitialView(){
-        const pts = [
-          Cesium.Cartesian3.fromDegrees(CUPERTINO.lon, CUPERTINO.lat, 0),
-          Cesium.Cartesian3.fromDegrees(NEW_DELHI.lon, NEW_DELHI.lat, 0)
-        ];
-        const bs = Cesium.BoundingSphere.fromPoints(pts);
-        const range = bs.radius * 3.0; // zoomed out a bit more
-        viewer.camera.flyToBoundingSphere(bs, {
-          duration: 0,
-          offset: new Cesium.HeadingPitchRange(
-            Math.PI,          // rotate 180° so Cupertino (west) is on the left, New Delhi (east) on the right
-            Cesium.Math.toRadians(-30), // pitch
-            range
-          )
+        
+        // Enter site button
+        document.getElementById('enterSiteBtn').addEventListener('click', () => {
+          hidePromo();
+          navigateTo('home');
         });
-      })();
-      // Overlay path uses CallbackProperty; no manual updates required
-
-      // Mobile units + details toggles
-      (function wireMobileToggles(){
+        
+        // Simulate button
+        document.getElementById('simulateBtn').addEventListener('click', () => {
+          runSimulation(false);
+        });
+        
+        // Mobile toggles
         const body = document.body;
-        // default collapsed panels and imperial units on mobile
         if (window.innerWidth <= 820) {
           body.setAttribute('data-panels', 'closed');
           body.setAttribute('data-units', 'imperial');
         }
+        
         const btnImp = document.getElementById('btnImperial');
         const btnMet = document.getElementById('btnMetric');
         const detailsBtn = document.getElementById('detailsToggle');
-        function setUnits(u){
+        
+        function setUnits(u) {
           body.setAttribute('data-units', u);
           const impActive = u === 'imperial';
           if (btnImp && btnMet) {
@@ -652,35 +795,589 @@
             btnMet.setAttribute('aria-selected', String(!impActive));
           }
         }
-        function setPanels(open){
+        
+        function setPanels(open) {
           body.setAttribute('data-panels', open ? 'open' : 'closed');
           if (detailsBtn) {
             detailsBtn.textContent = open ? 'Hide details' : 'Show details';
             detailsBtn.setAttribute('aria-expanded', String(open));
           }
-          // Reposition distance tag when panels open/close (desktop code guards on width)
-          requestAnimationFrame(positionDistanceTag);
         }
-        if (btnImp) btnImp.addEventListener('click', ()=>setUnits('imperial'));
-        if (btnMet) btnMet.addEventListener('click', ()=>setUnits('metric'));
-        if (detailsBtn) detailsBtn.addEventListener('click', ()=>{
+        
+        if (btnImp) btnImp.addEventListener('click', () => setUnits('imperial'));
+        if (btnMet) btnMet.addEventListener('click', () => setUnits('metric'));
+        if (detailsBtn) detailsBtn.addEventListener('click', () => {
           const open = body.getAttribute('data-panels') !== 'open';
           setPanels(open);
         });
-        // Initialize button states
+        
         setUnits(body.getAttribute('data-units') || 'imperial');
         setPanels(body.getAttribute('data-panels') === 'open');
-        window.addEventListener('resize', ()=>{
-          // Reset to collapsed on small screens to keep globe visible
-          if (window.innerWidth <= 820) {
-            setPanels(false);
-          } else {
-            // desktop – ensure both panels visible (CSS handles)
+      }
+      
+      // ===== CESIUM GLOBE =====
+      function initCesium() {
+        window.CESIUM_BASE_URL = 'https://unpkg.com/cesium@1.119/Build/Cesium/';
+        const ION_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYWY0MmJkMy01ODFhLTQ0ZWEtYWYyYS03ZmMyMTdiZmYxMGMiLCJpZCI6MzcxNTU0LCJpYXQiOjE3NjYzMDc2NDN9.SdxF3dwacj4mTMhMQWUAekzCBNNSacNiJWDO6B9evYk';
+        
+        if (ION_TOKEN) {
+          Cesium.Ion.defaultAccessToken = ION_TOKEN;
+        }
+        
+        viewer = new Cesium.Viewer('cesiumContainer', {
+          animation: false,
+          timeline: false,
+          baseLayerPicker: false,
+          geocoder: false,
+          homeButton: false,
+          sceneModePicker: false,
+          navigationHelpButton: false,
+          infoBox: false
+        });
+        
+        if (ION_TOKEN) {
+          (async () => {
+            try {
+              const terrain = await Cesium.createWorldTerrainAsync();
+              viewer.terrainProvider = terrain;
+            } catch (e) {
+              console.warn('WorldTerrain load failed', e);
+            }
+            try {
+              const worldImagery = await Cesium.IonImageryProvider.fromAssetId(2);
+              viewer.imageryLayers.removeAll();
+              viewer.imageryLayers.addImageryProvider(worldImagery);
+              tuneImagery();
+            } catch (e) {
+              console.warn('Ion imagery load failed', e);
+              viewer.imageryLayers.removeAll();
+              viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                credit: '© OpenStreetMap contributors'
+              }));
+              tuneImagery();
+            }
+          })();
+        } else {
+          viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+          viewer.imageryLayers.removeAll();
+          viewer.imageryLayers.addImageryProvider(new Cesium.UrlTemplateImageryProvider({
+            url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            credit: '© OpenStreetMap contributors'
+          }));
+          tuneImagery();
+        }
+        
+        viewer.scene.highDynamicRange = false;
+        viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#1b3c7a');
+        viewer.scene.globe.enableLighting = true;
+        viewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere();
+        viewer.scene.globe.showGroundAtmosphere = true;
+        viewer.scene.globe.translucency.enabled = true;
+        viewer.scene.globe.translucency.frontFaceAlpha = 0.35;
+        viewer.scene.globe.translucency.backFaceAlpha = 0.08;
+        
+        if (viewer.scene.skyAtmosphere.brightnessShift !== undefined) {
+          viewer.scene.skyAtmosphere.brightnessShift = 0.4;
+          viewer.scene.skyAtmosphere.hueShift = 0.02;
+          viewer.scene.skyAtmosphere.saturationShift = 0.15;
+        }
+        
+        try {
+          viewer.scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(1.0, 0.6, 0.3),
+            intensity: 2.2
+          });
+        } catch(e) {}
+        
+        function tuneImagery() {
+          const layers = viewer.imageryLayers;
+          for (let i = 0; i < layers.length; i++) {
+            const layer = layers.get(i);
+            layer.brightness = 1.45;
+            layer.contrast = 1.20;
+            layer.gamma = 0.88;
+            layer.saturation = 1.25;
+          }
+        }
+        
+        // Labels
+        function labelAt(lon, lat, text) {
+          return viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(lon, lat, 0),
+            label: {
+              text,
+              font: '700 14px Montserrat, sans-serif',
+              fillColor: Cesium.Color.WHITE,
+              showBackground: true,
+              backgroundColor: Cesium.Color.fromAlpha(Cesium.Color.BLACK, 0.6),
+              pixelOffset: new Cesium.Cartesian2(0, -16)
+            }
+          });
+        }
+        labelAt(CUPERTINO.lon, CUPERTINO.lat, 'Cupertino');
+        labelAt(NEW_DELHI.lon, NEW_DELHI.lat, 'New Delhi');
+        
+        // Build chord
+        function buildChord(lon1, lat1, lon2, lat2, steps = 180) {
+          const start = Cesium.Cartesian3.fromDegrees(lon1, lat1, 0);
+          const end = Cesium.Cartesian3.fromDegrees(lon2, lat2, 0);
+          const pts = new Array(steps + 1);
+          for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const p = Cesium.Cartesian3.lerp(start, end, t, new Cesium.Cartesian3());
+            pts[i] = p;
+          }
+          return pts;
+        }
+        
+        chordPositions = buildChord(CUPERTINO.lon, CUPERTINO.lat, NEW_DELHI.lon, NEW_DELHI.lat, 240);
+        
+        const YELLOW_TUNNEL = Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.8);
+        const RED_PROGRESS = Cesium.Color.fromCssColorString('#DC143C').withAlpha(0.8);
+        
+        viewer.entities.add({
+          name: 'The Gravity Tunnel',
+          polyline: {
+            positions: chordPositions,
+            width: 12,
+            material: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL),
+            depthFailMaterial: new Cesium.ColorMaterialProperty(YELLOW_TUNNEL)
           }
         });
-      })();
+        
+        viewer.entities.add({
+          name: 'Tunnel Progress Overlay',
+          polyline: {
+            positions: new Cesium.CallbackProperty(function() {
+              const idx = Math.max(1, Math.floor(progressFraction * (chordPositions.length - 1)));
+              return chordPositions.slice(0, idx + 1);
+            }, false),
+            width: 12,
+            material: new Cesium.ColorMaterialProperty(RED_PROGRESS),
+            depthFailMaterial: new Cesium.ColorMaterialProperty(RED_PROGRESS)
+          }
+        });
+        
+        viewer.entities.add({
+          position: new Cesium.CallbackProperty(function() {
+            const p = progress01();
+            const idx = Math.max(0, Math.min(chordPositions.length - 1, Math.floor(p * (chordPositions.length - 1))));
+            return chordPositions[idx];
+          }, false),
+          point: {
+            pixelSize: 16,
+            color: Cesium.Color.fromCssColorString('#ffb347'),
+            outlineWidth: 2,
+            outlineColor: Cesium.Color.WHITE,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY
+          }
+        });
+        
+        // Camera
+        const pts = [
+          Cesium.Cartesian3.fromDegrees(CUPERTINO.lon, CUPERTINO.lat, 0),
+          Cesium.Cartesian3.fromDegrees(NEW_DELHI.lon, NEW_DELHI.lat, 0)
+        ];
+        const bs = Cesium.BoundingSphere.fromPoints(pts);
+        const range = bs.radius * 3.0;
+        viewer.camera.flyToBoundingSphere(bs, {
+          duration: 0,
+          offset: new Cesium.HeadingPitchRange(
+            Math.PI,
+            Cesium.Math.toRadians(-30),
+            range
+          )
+        });
+      }
+      
+      // ===== LOAD SUB-VIEWS =====
+      function getNavHTML(activeView) {
+        return `
+          <nav class="naatak-nav">
+            <div class="naatak-nav-inner">
+              <div class="naatak-logo" onclick="navigateTo('home')">
+                <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
+                <span class="naatak-logo-text">GravityTrain</span>
+              </div>
+              <div class="naatak-nav-links">
+                <a onclick="navigateTo('globe', true)">Show Digging Progress</a>
+                <a onclick="navigateTo('simulation')" class="${activeView === 'simulation' ? 'active' : ''}">Simulation</a>
+                <a onclick="navigateTo('concepts')" class="${activeView === 'concepts' ? 'active' : ''}">Concepts</a>
+                <a onclick="navigateTo('history')" class="${activeView === 'history' ? 'active' : ''}">History</a>
+                <a onclick="navigateTo('about')" class="${activeView === 'about' ? 'active' : ''}">About</a>
+                <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
+                  <button class="naatak-btn naatak-btn-amber">Book Tickets</button>
+                </a>
+              </div>
+            </div>
+          </nav>
+        `;
+      }
+      
+      function getFooterHTML() {
+        return `
+          <footer class="naatak-footer">
+            <div class="naatak-footer-inner">
+              <div class="naatak-footer-top">
+                <div class="naatak-logo" onclick="navigateTo('home')">
+                  <img class="naatak-logo-img" src="gt-logo.jpg" alt="Gravity Train logo" />
+                  <span class="naatak-logo-text">GravityTrain</span>
+                </div>
+                <div class="naatak-footer-links">
+                  <a onclick="navigateTo('globe', true)">Digging Progress</a>
+                  <a onclick="navigateTo('simulation')">Simulation</a>
+                  <a onclick="navigateTo('concepts')">Concepts</a>
+                  <a onclick="navigateTo('history')">History</a>
+                  <a onclick="navigateTo('about')">About</a>
+                </div>
+              </div>
+              <div class="naatak-footer-bottom">
+                <p>An interactive lobby experience for "Hole" — A Naatak Production © 2026</p>
+              </div>
+            </div>
+          </footer>
+        `;
+      }
+      
+      function loadSimulationView() {
+        document.getElementById('simulation-view').innerHTML = `
+          ${getNavHTML('simulation')}
+          <div class="section" style="padding-top:3rem">
+            <div class="max-w-7xl">
+              <div style="text-align:center;margin-bottom:2rem">
+                <h1 class="hero-title" style="font-size:3rem">Gravity Train Simulation</h1>
+                <p style="color:var(--slate-300);font-size:1.25rem">Interactive visualization of a gravity train journey through Earth</p>
+              </div>
+              
+              <div class="card" style="margin-bottom:2rem">
+                <h3 style="color:white;font-weight:600;margin-bottom:1rem">Select Route</h3>
+                <div class="grid-2" style="gap:1rem">
+                  <div>
+                    <label style="color:var(--slate-300);display:block;margin-bottom:0.5rem">Departure City</label>
+                    <select id="cityA" style="width:100%;padding:0.75rem;border-radius:0.5rem;background:var(--slate-700);border:1px solid var(--indigo-900);color:white">
+                      <option value="Cupertino">Cupertino, USA</option>
+                      <option value="New York">New York, USA</option>
+                      <option value="London">London, UK</option>
+                      <option value="Tokyo">Tokyo, Japan</option>
+                      <option value="Sydney">Sydney, Australia</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="color:var(--slate-300);display:block;margin-bottom:0.5rem">Arrival City</label>
+                    <select id="cityB" style="width:100%;padding:0.75rem;border-radius:0.5rem;background:var(--slate-700);border:1px solid var(--indigo-900);color:white">
+                      <option value="New Delhi">New Delhi, India</option>
+                      <option value="Mumbai">Mumbai, India</option>
+                      <option value="Beijing">Beijing, China</option>
+                      <option value="Moscow">Moscow, Russia</option>
+                      <option value="Cairo">Cairo, Egypt</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-top:1rem;padding:1rem;background:rgba(99,102,241,0.1);border-radius:0.5rem;border:1px solid rgba(99,102,241,0.3);display:flex;justify-content:space-between;align-items:center">
+                  <span style="color:var(--slate-300)">Route Distance:</span>
+                  <span style="font-size:1.5rem;font-weight:700;color:var(--indigo-400)" id="simDistance">~10,000 km</span>
+                </div>
+              </div>
+              
+              <div class="card" style="text-align:center;padding:3rem">
+                <svg id="simViz" width="400" height="200" viewBox="0 0 400 200" style="max-width:100%">
+                  <defs>
+                    <radialGradient id="simEarth">
+                      <stop offset="0%" stop-color="#4f46e5"/>
+                      <stop offset="50%" stop-color="#3730a3"/>
+                      <stop offset="100%" stop-color="#1e1b4b"/>
+                    </radialGradient>
+                  </defs>
+                  <circle cx="200" cy="100" r="80" fill="url(#simEarth)" opacity="0.4"/>
+                  <circle cx="200" cy="100" r="80" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.5"/>
+                  <line id="simTunnel" x1="120" y1="50" x2="280" y2="50" stroke="#374151" stroke-width="4" stroke-linecap="round"/>
+                  <line id="simProgress" x1="120" y1="50" x2="120" y2="50" stroke="#22c55e" stroke-width="4" stroke-linecap="round"/>
+                  <circle id="simStart" cx="120" cy="50" r="6" fill="#60a5fa"/>
+                  <circle id="simEnd" cx="280" cy="50" r="6" fill="#60a5fa"/>
+                  <circle id="simTrain" cx="120" cy="50" r="8" fill="#f59e0b"/>
+                  <circle cx="200" cy="100" r="3" fill="#fbbf24" opacity="0.6"/>
+                </svg>
+                <div style="margin-top:1rem">
+                  <span style="font-size:2rem;font-weight:700;color:#22c55e" id="simPct">0%</span>
+                </div>
+                <div style="color:var(--slate-400);font-size:0.875rem">~42 min journey</div>
+                
+                <div style="margin-top:2rem;display:flex;gap:1rem;justify-content:center">
+                  <button class="naatak-btn naatak-btn-primary naatak-btn-lg" id="simPlayBtn" onclick="toggleSimPlay()">▶ Play</button>
+                  <button class="naatak-btn naatak-btn-outline naatak-btn-lg" onclick="resetSim()">↺ Reset</button>
+                </div>
+              </div>
+              
+              <div class="grid-3" style="margin-top:2rem">
+                <div class="card">
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.75rem">Phase 1: Acceleration</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">The train accelerates as it falls toward Earth's center, gaining speed due to gravity. No propulsion needed!</p>
+                </div>
+                <div class="card">
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.75rem">Phase 2: Maximum Speed</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">At the midpoint (deepest point), the train reaches its maximum velocity of approximately 8 km/s.</p>
+                </div>
+                <div class="card">
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.75rem">Phase 3: Deceleration</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Gravity naturally slows the train as it climbs toward the destination, arriving with zero velocity.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${getFooterHTML()}
+        `;
+        initSimulation();
+      }
+      
+      // Simulation state
+      let simPlaying = false;
+      let simProgress = 0;
+      let simRaf = null;
+      
+      function initSimulation() {
+        simProgress = 0;
+        simPlaying = false;
+        updateSimViz();
+      }
+      
+      function updateSimViz() {
+        const t = simProgress / 100;
+        const trainX = 120 + (280 - 120) * t;
+        document.getElementById('simTrain').setAttribute('cx', trainX);
+        document.getElementById('simProgress').setAttribute('x2', trainX);
+        document.getElementById('simPct').textContent = Math.round(simProgress) + '%';
+      }
+      
+      function toggleSimPlay() {
+        if (simPlaying) {
+          simPlaying = false;
+          document.getElementById('simPlayBtn').textContent = '▶ Play';
+          if (simRaf) cancelAnimationFrame(simRaf);
+        } else {
+          simPlaying = true;
+          document.getElementById('simPlayBtn').textContent = '⏸ Pause';
+          const startTime = performance.now();
+          const startProgress = simProgress;
+          const duration = 10000 * (1 - startProgress / 100);
+          
+          function animate(ts) {
+            if (!simPlaying) return;
+            const elapsed = ts - startTime;
+            simProgress = startProgress + (100 - startProgress) * Math.min(1, elapsed / duration);
+            updateSimViz();
+            if (simProgress < 100) {
+              simRaf = requestAnimationFrame(animate);
+            } else {
+              simPlaying = false;
+              document.getElementById('simPlayBtn').textContent = '▶ Play';
+            }
+          }
+          simRaf = requestAnimationFrame(animate);
+        }
+      }
+      
+      function resetSim() {
+        simPlaying = false;
+        simProgress = 0;
+        document.getElementById('simPlayBtn').textContent = '▶ Play';
+        if (simRaf) cancelAnimationFrame(simRaf);
+        updateSimViz();
+      }
+      
+      function loadConceptsView() {
+        document.getElementById('concepts-view').innerHTML = `
+          ${getNavHTML('concepts')}
+          <div class="section" style="padding-top:3rem">
+            <div class="max-w-5xl">
+              <div style="text-align:center;margin-bottom:3rem">
+                <h1 class="hero-title" style="font-size:3rem">The Physics Behind the Journey</h1>
+                <p style="color:var(--slate-300);font-size:1.25rem;max-width:42rem;margin:0 auto">Discover the fascinating science that makes gravity trains possible.</p>
+              </div>
+              
+              <div class="card" style="margin-bottom:2rem;border-color:rgba(34,197,94,0.3)">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem">
+                  <div style="width:48px;height:48px;background:rgba(34,197,94,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  </div>
+                  <h2 style="font-size:1.5rem;font-weight:700;color:#22c55e">The Gravity Tunnel</h2>
+                </div>
+                <p style="color:var(--slate-300);font-size:1.125rem;line-height:1.6;margin-bottom:1.5rem">A <strong style="color:white">gravity tunnel</strong> (or gravity train) is a theoretical transportation system that uses Earth's gravitational field to move passengers between any two points on the planet — with <em>no fuel required</em>.</p>
+                <div style="background:rgba(34,197,94,0.1);border-radius:0.75rem;padding:1.5rem;border:1px solid rgba(34,197,94,0.3)">
+                  <h3 style="font-size:1.125rem;font-weight:600;color:#22c55e;margin-bottom:0.75rem">🎯 The Amazing 42-Minute Rule</h3>
+                  <p style="color:var(--slate-300)">No matter the distance between two cities — the journey <strong style="color:white">always takes approximately 42 minutes and 12 seconds</strong>. This remarkable constant emerges from the mathematics of simple harmonic motion inside a uniform sphere.</p>
+                </div>
+              </div>
+              
+              <div class="card" style="margin-bottom:2rem;border-color:rgba(6,182,212,0.3)">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem">
+                  <div style="width:48px;height:48px;background:rgba(6,182,212,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </div>
+                  <h2 style="font-size:1.5rem;font-weight:700;color:#06b6d4">The Brachistochrone Curve</h2>
+                </div>
+                <p style="color:var(--slate-300);font-size:1.125rem;line-height:1.6;margin-bottom:1.5rem">The <strong style="color:white">brachistochrone</strong> (from Greek: "shortest time") is the curve of fastest descent under gravity. If you release a ball on this curved track, it will reach the endpoint <em>faster than any other path</em>!</p>
+                <div style="background:rgba(6,182,212,0.1);border-radius:0.75rem;padding:1.5rem;border:1px solid rgba(6,182,212,0.3)">
+                  <h3 style="font-size:1.125rem;font-weight:600;color:#06b6d4;margin-bottom:0.75rem">⚡ Why Is It Faster?</h3>
+                  <p style="color:var(--slate-300)">The brachistochrone curve initially drops more steeply, allowing the object to <strong style="color:white">gain speed early</strong>. Even though the total path is longer, the higher average velocity more than compensates.</p>
+                </div>
+              </div>
+              
+              <div style="text-align:center;margin-top:3rem">
+                <button class="naatak-btn naatak-btn-primary naatak-btn-lg" onclick="navigateTo('simulation')">Try the Simulation</button>
+                <button class="naatak-btn naatak-btn-outline naatak-btn-lg" onclick="navigateTo('home')" style="margin-left:1rem">Back to Home</button>
+              </div>
+            </div>
+          </div>
+          ${getFooterHTML()}
+        `;
+      }
+      
+      function loadHistoryView() {
+        document.getElementById('history-view').innerHTML = `
+          ${getNavHTML('history')}
+          <div class="section" style="padding-top:3rem">
+            <div class="max-w-5xl">
+              <div style="text-align:center;margin-bottom:3rem">
+                <div class="hero-badge" style="margin-bottom:2rem">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <span>Scientific History</span>
+                </div>
+                <h1 class="hero-title" style="font-size:3rem">The History of Gravity Tunnels</h1>
+                <p style="color:var(--slate-300);font-size:1.25rem;max-width:48rem;margin:0 auto">The concept of falling through Earth dates back over 340 years, born from a remarkable correspondence between two of history's greatest scientific minds.</p>
+              </div>
+              
+              <div class="card" style="margin-bottom:2rem">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem">
+                  <div style="width:40px;height:40px;background:rgba(245,158,11,0.2);border-radius:0.5rem;display:flex;align-items:center;justify-content:center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+                  </div>
+                  <h2 style="font-size:1.5rem;font-weight:700;color:#f59e0b">Robert Hooke (1635-1703)</h2>
+                </div>
+                <p style="color:var(--slate-300);line-height:1.6;margin-bottom:1rem"><strong style="color:white">Robert Hooke</strong> was an English polymath who made groundbreaking contributions to physics, biology, and astronomy. In <strong style="color:white">November 1679</strong>, Hooke initiated a correspondence with Isaac Newton proposing: <em style="color:var(--indigo-300)">What would happen if an object fell through a tunnel drilled through the center of the Earth?</em></p>
+              </div>
+              
+              <div class="card" style="margin-bottom:2rem">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem">
+                  <div style="width:40px;height:40px;background:rgba(168,85,247,0.2);border-radius:0.5rem;display:flex;align-items:center;justify-content:center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+                  </div>
+                  <h2 style="font-size:1.5rem;font-weight:700;color:#a855f7">Isaac Newton (1643-1727)</h2>
+                </div>
+                <p style="color:var(--slate-300);line-height:1.6">Newton responded with mathematical rigor, revealing that assuming a uniformly dense Earth, the object would undergo <strong style="color:#a855f7">simple harmonic motion</strong> — oscillating back and forth like a pendulum, with a period independent of the tunnel's path!</p>
+              </div>
+              
+              <h2 style="font-size:1.5rem;font-weight:700;color:white;text-align:center;margin:3rem 0 2rem">Historical Timeline</h2>
+              <div style="border-left:2px solid rgba(99,102,241,0.3);padding-left:2rem;margin-left:1rem">
+                <div style="margin-bottom:2rem;position:relative">
+                  <div style="position:absolute;left:-2.5rem;width:16px;height:16px;background:var(--indigo-500);border-radius:50%;border:4px solid var(--slate-900)"></div>
+                  <span style="color:var(--indigo-400);font-weight:700">1679</span>
+                  <h3 style="color:white;font-weight:600;margin:0.25rem 0">The Correspondence Begins</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Robert Hooke writes to Newton proposing the gravity tunnel thought experiment.</p>
+                </div>
+                <div style="margin-bottom:2rem;position:relative">
+                  <div style="position:absolute;left:-2.5rem;width:16px;height:16px;background:var(--indigo-500);border-radius:50%;border:4px solid var(--slate-900)"></div>
+                  <span style="color:var(--indigo-400);font-weight:700">1687</span>
+                  <h3 style="color:white;font-weight:600;margin:0.25rem 0">Principia Published</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Newton publishes Philosophiæ Naturalis Principia Mathematica.</p>
+                </div>
+                <div style="margin-bottom:2rem;position:relative">
+                  <div style="position:absolute;left:-2.5rem;width:16px;height:16px;background:var(--indigo-500);border-radius:50%;border:4px solid var(--slate-900)"></div>
+                  <span style="color:var(--indigo-400);font-weight:700">1883</span>
+                  <h3 style="color:white;font-weight:600;margin:0.25rem 0">The 42-Minute Calculation</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Paul Painlevé formally calculates that any gravity train journey would take approximately 42 minutes.</p>
+                </div>
+              </div>
+              
+              <div style="text-align:center;margin-top:3rem">
+                <button class="naatak-btn naatak-btn-primary naatak-btn-lg" onclick="navigateTo('concepts')">Learn the Physics</button>
+                <button class="naatak-btn naatak-btn-outline naatak-btn-lg" onclick="navigateTo('simulation')" style="margin-left:1rem">Try the Simulation</button>
+              </div>
+            </div>
+          </div>
+          ${getFooterHTML()}
+        `;
+      }
+      
+      function loadAboutView() {
+        document.getElementById('about-view').innerHTML = `
+          ${getNavHTML('about')}
+          <div class="section" style="padding-top:3rem">
+            <div class="max-w-5xl">
+              <div style="text-align:center;margin-bottom:3rem">
+                <div class="hero-badge" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);margin-bottom:2rem">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span style="color:#fcd34d">A Naatak Production</span>
+                </div>
+                <h1 class="hero-title" style="font-size:3rem">About This Experience</h1>
+                <p style="color:var(--slate-300);font-size:1.25rem;max-width:48rem;margin:0 auto">Welcome to the interactive lobby experience for <strong style="color:white">"Hole"</strong> — a groundbreaking theatrical production that brings the science fiction of gravity trains to life on stage.</p>
+              </div>
+              
+              <div class="card" style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(234,88,12,0.1));border-color:rgba(245,158,11,0.3);margin-bottom:2rem;padding:2rem">
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem">
+                  <div style="width:48px;height:48px;background:rgba(245,158,11,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <h2 style="font-size:1.5rem;font-weight:700;color:#f59e0b">"Hole" — The Play</h2>
+                </div>
+                <p style="color:var(--slate-300);font-size:1.125rem;line-height:1.6;margin-bottom:1rem">What if you could travel anywhere on Earth in just 42 minutes? <strong style="color:white">"Hole"</strong> explores this tantalizing possibility through the lens of human connection, ambition, and the unintended consequences of revolutionary technology.</p>
+                <p style="color:var(--slate-300);line-height:1.6;margin-bottom:1.5rem">Set in a near-future where gravity trains have become reality, the play follows characters whose lives intersect in unexpected ways.</p>
+                <a href="https://www.naatak.org/portfolio/2026-hole/" target="_blank" rel="noopener noreferrer">
+                  <button class="naatak-btn naatak-btn-amber naatak-btn-lg">Get Your Tickets →</button>
+                </a>
+              </div>
+              
+              <div style="text-align:center;margin-bottom:2rem">
+                <h2 style="font-size:1.75rem;font-weight:700;color:white;margin-bottom:1rem">About Naatak</h2>
+                <p style="color:var(--slate-400);max-width:32rem;margin:0 auto">Bringing South Asian stories to life through innovative theater</p>
+              </div>
+              
+              <div class="grid-3">
+                <div class="card" style="text-align:center">
+                  <div style="width:48px;height:48px;background:rgba(99,102,241,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  </div>
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.5rem">Community Theater</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">One of the largest Indian theater groups in the United States, serving the Bay Area since 1994.</p>
+                </div>
+                <div class="card" style="text-align:center">
+                  <div style="width:48px;height:48px;background:rgba(168,85,247,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M12 3l1.912 5.813h6.123l-4.968 3.577L17 18.203l-5-3.577-5 3.577 1.932-5.813L4 8.813h6.122L12 3z"/></svg>
+                  </div>
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.5rem">Original Productions</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Creating thought-provoking original works that blend cultural heritage with contemporary themes.</p>
+                </div>
+                <div class="card" style="text-align:center">
+                  <div style="width:48px;height:48px;background:rgba(34,197,94,0.2);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  </div>
+                  <h3 style="color:white;font-weight:600;margin-bottom:0.5rem">Volunteer-Driven</h3>
+                  <p style="color:var(--slate-400);font-size:0.875rem">Powered by passionate volunteers dedicated to the art of storytelling.</p>
+                </div>
+              </div>
+              
+              <div style="text-align:center;margin-top:3rem">
+                <a href="https://www.naatak.org" target="_blank" rel="noopener noreferrer">
+                  <button class="naatak-btn naatak-btn-outline naatak-btn-lg">Visit Naatak.org →</button>
+                </a>
+              </div>
+            </div>
+          </div>
+          ${getFooterHTML()}
+        `;
+      }
+      
+      // ===== INIT =====
+      document.addEventListener('DOMContentLoaded', () => {
+        initUI();
+        wireEvents();
+        initCesium();
+        
+        // Auto-run simulation on first load
+        setTimeout(() => {
+          runSimulation(true);
+        }, 1000);
+      });
     </script>
   </body>
 </html>
-
-
